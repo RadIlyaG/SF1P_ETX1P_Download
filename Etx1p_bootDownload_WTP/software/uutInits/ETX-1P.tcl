@@ -1,0 +1,5 @@
+set gaSet(customer) "general"
+set gaSet(safaricom.SWver) "vcpeos_5.0.1.229.5_arm.tar.gz"
+set gaSet(general.SWver) "vcpeos_5.2.0.13.8_arm.tar.gz"
+set gaSet(DutFullName) "ETX-1P"
+set gaSet(DutInitName) "ETX-1P.tcl"
