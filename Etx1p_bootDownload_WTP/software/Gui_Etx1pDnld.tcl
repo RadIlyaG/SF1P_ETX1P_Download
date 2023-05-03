@@ -6,7 +6,7 @@ proc GUI {} {
   
   wm title . "$gaSet(pair) $gaSet(DutFullName) Boot Downloads"
   wm protocol . WM_DELETE_WINDOW {Quit}
-  wm geometry . 492x276$gaGui(xy)
+  wm geometry . $gaGui(xy) ; #492x276
   wm resizable . 1 1
   set descmenu {
     "&File" all file 0 {	 
@@ -145,9 +145,9 @@ proc GUI {} {
         # 07/02/2022 09:45:45 pack $gaGui(chbCustSaf) $gaGui(chbCustGen)  -padx 2 -pady 2 -anchor w
         
         set gaGui(labBoot) [ttk::label $fr.labBoot -text "Boot version: $gaSet(dbrBoot)" ]
-        pack $gaGui(labBoot)  -padx 2 -pady 2 -anchor w
+        #pack $gaGui(labBoot)  -padx 2 -pady 2 -anchor w
         set gaGui(labApp) [ttk::label $fr.labApp -text "App version: $gaSet(dbrApp)" ]
-        pack $gaGui(labApp)  -padx 2 -pady 2 -anchor w
+        #pack $gaGui(labApp)  -padx 2 -pady 2 -anchor w
         
         set gaGui(actGen) [ttk::label $fr.labActPack -text "Active Package: $gaSet(actGen)" ]
         pack $gaGui(actGen)  -padx 2 -pady 2 -anchor w
@@ -183,12 +183,30 @@ proc GUI {} {
         set labUutOpt [ttk::label $fu.labUutOpt -text "UUT option  "]
         set gaGui(cbUutOpt) [ttk::combobox $fu.cbUutOpt -textvariable gaSet(UutOpt) \
             -values [list ETX1P SF1P-2UTP SF1P-4UTP SF1P-4UTP-HL] -justify center]
-        pack $labUutOpt $gaGui(cbUutOpt) -anchor w -side left -padx 3
+        
+        set labPCB_MAIN_ID [ttk::label $fu.labPCB_MAIN_ID -text "PCB_MAIN_ID"]
+        set gaGui(entPCB_MAIN_ID) [ttk::entry $fu.entPCB_MAIN_ID -justify center -textvariable gaSet(mainPcbId)] 
+        
+        set labPCB_SUB_CARD_1_ID [ttk::label $fu.labPCB_SUB_CARD_1_ID -text "PCB_SUB_CARD_1_ID"]
+        set gaGui(entPCB_SUB_CARD_1_ID) [ttk::entry $fu.entPCB_SUB_CARD_1_ID -justify center -textvariable gaSet(sub1PcbId)] 
+        
+        
+        set labHARDWARE_ADDITION [ttk::label $fu.labHARDWARE_ADDITION -text "HARDWARE_ADDITION"]
+        set gaGui(entHARDWARE_ADDITION) [ttk::entry $fu.entHARDWARE_ADDITION -justify center -textvariable gaSet(hwAdd)]  
+
+        set labCSL [ttk::label $fu.labCSL -text "CSL"]
+        set gaGui(entCSL) [ttk::entry $fu.entCSL -justify center -textvariable gaSet(csl)] 
+        
+        #grid $labUutOpt $gaGui(cbUutOpt)  -padx 3
+        grid $labPCB_MAIN_ID       $gaGui(entPCB_MAIN_ID)        -sticky w -padx 2 -pady 2
+        grid $labPCB_SUB_CARD_1_ID $gaGui(entPCB_SUB_CARD_1_ID)  -sticky w -padx 2 -pady 2
+        grid $labHARDWARE_ADDITION $gaGui(entHARDWARE_ADDITION)  -sticky w -padx 2 -pady 2
+        grid $labCSL               $gaGui(entCSL)                -sticky w -padx 2 -pady 2
         
       set frDUT  [frame $f.frDUT -bd 2 -relief groove] 
         set labDUT [ttk::label $frDUT.labDUT -text "UUT's barcode" -width 15]
-        set gaGui(entDUT) [ttk::entry $frDUT.entDUT -justify center -width 45 -textvariable gaSet(entDUT)]
-        bind $gaGui(entDUT)  <Return> {GetDbrName full}        
+        set gaGui(entDUT) [ttk::entry $frDUT.entDUT -justify center -width 25 -textvariable gaSet(entDUT)]
+        bind $gaGui(entDUT)  <Return> {GetDbrName full}   
         pack $labDUT $gaGui(entDUT) -side left -padx 2
       
       set frCur [frame $f.frCur] 
@@ -350,9 +368,17 @@ proc ButRun {} {
     # puts "Ret of GetDbrSW: <$ret>"
   # }
     
+  if {$gaSet(idBarcode) eq ""} {
+    set gaSet(curTest) $gaSet(startFrom)
+    set gaSet(fail) "Scan the UUT IdBarcode"
+    set ret -1
+  }
   
-  set gaSet(log.$gaSet(pair)) c:/logs/${gaSet(logTime)}.txt
-  AddToPairLog $gaSet(pair) "$gaSet(logTime)"
+  set gaSet(log.$gaSet(pair)) c:/logs/${gaSet(logTime)}.${gaSet(idBarcode)}.txt
+  AddToPairLog $gaSet(pair) "LogTime: $gaSet(logTime)"
+  AddToPairLog $gaSet(pair) " $gaSet(idBarcode) "
+  
+  puts "ButRun $gaSet(idBarcode)"
   
   if {$ret==0} {
     Status ""
@@ -453,6 +479,7 @@ proc ButRun {} {
   $gaGui(tbstop) configure -relief sunken -state disabled
   $gaGui(tbpaus) configure -relief sunken -state disabled
   
+  set gaSet(idBarcode) ""
   
   update
 }
@@ -542,7 +569,7 @@ proc GuiLinuxSetup {} {
       
       set labPack [ttk::label $fr2.labPack  -text "Package: " -width $labelWidth] 
       set cmbPack [ttk::combobox $fr2.cmbPack  -textvariable gaTmpSet(general.pcpes) -values $gens -width 30 -justify center]
-      grid $labPack $cmbPack -sticky w -padx 2 -pady 2
+      grid $labPack $cmbPack -sticky w -padx 2 -pady 2; ## 11:35 30/04/2023 
       
       set labSW [ttk::label $fr2.lab3  -text "SW" -width $labelWidth] 
       #set lab4 [ttk::entry $fr2.lab4  -textvariable gaTmpSet(general.SWver) -width 30 -justify center] 
@@ -555,11 +582,11 @@ proc GuiLinuxSetup {} {
       
       
       set lab5 [ttk::label $fr2.lab5  -text "Flash Image: " -width $labelWidth] 
-      set cmb5 [ttk::combobox $fr2.cmb5  -textvariable gaTmpSet(general.flashImg) -values $flashs -width 30 -justify center]
-      grid $lab5 $cmb5 -sticky w -padx 2 -pady 2
+      set cmb5 [ttk::combobox $fr2.cmb5  -textvariable gaTmpSet(general.flashImg)  -values $flashs -width 30 -justify center]
+      grid $lab5 $cmb5 -sticky w -padx 2 -pady 2 ; #-state disabled
       
       set lab6 [ttk::label $fr2.lab6  -text "Boot Script: " -width $labelWidth] 
-      set cmb6 [ttk::combobox $fr2.cmb6  -textvariable gaTmpSet(bootScript) -values $bootScripts -width 30 -justify center]
+      set cmb6 [ttk::combobox $fr2.cmb6  -textvariable gaTmpSet(bootScript) -state disabled -values $bootScripts -width 30 -justify center]
       grid $lab6 $cmb6 -sticky w -padx 2 -pady 2
       
     grid $fr2  -padx 2 -pady 2  -sticky ew

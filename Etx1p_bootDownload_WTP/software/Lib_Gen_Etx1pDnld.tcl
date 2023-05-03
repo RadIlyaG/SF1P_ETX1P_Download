@@ -139,6 +139,7 @@ proc SaveUutInit {fil} {
     set gaSet(dbrBoot)  ??
   }  
   puts $id "set gaSet(dbrBoot)   \"$gaSet(dbrBoot)\""
+  
     
   close $id
 }  
@@ -149,7 +150,11 @@ proc SaveInitGUI {} {
   global gaSet  
   set id [open [info host]/init$gaSet(pair).tcl w]
   puts $id "set gaGui(xy) +[winfo x .]+[winfo y .]"
-  
+  puts $id "set gaSet(mainPcbId)   \"[string toupper $gaSet(mainPcbId)]\""
+  puts $id "set gaSet(sub1PcbId)   \"[string toupper $gaSet(sub1PcbId)]\""
+  puts $id "set gaSet(hwAdd)       \"[string toupper $gaSet(hwAdd)]\""
+  puts $id "set gaSet(csl)         \"[string toupper $gaSet(csl)]\""
+ 
   close $id   
 }
 # ***************************************************************************
@@ -568,43 +573,58 @@ proc GetDbrSW {barcode} {
     return -1
   }
   
+  set sw 0
   catch {exec $gaSet(javaLocation)\\java -jar $::RadAppsPath/SWVersions4IDnumber.jar $barcode} b
   puts "GetDbrSW barcode:<$barcode> b:<$b>" ; update
+  foreach pair [split $b \n] {
+    foreach {aa bb} $pair {      
+      if {[string range $aa 0 1 ]=="SW" && [string index $bb 0]!= "B"} {
+        puts "aa=$aa bb=$bb"; update
+        set sw 1
+        break
+      }
+    }
+    if {$sw} {break}
+  }
+  #set gaSet(dbrSWver) $bb
   after 1000
   
-  set swTxt [glob SW*_$barcode.txt]
-  catch {file delete -force $swTxt}
+  # set swTxt [glob SW*_$barcode.txt]
+  # catch {file delete -force $swTxt}
   
-  if ![info exists gaSet(dbrAppSwPack)] {
-    set gaSet(dbrAppSwPack) ""
-  }
-  set dbrAppSwPackIndx [lsearch $b $gaSet(dbrAppSwPack)]  
-  if {$dbrAppSwPackIndx<0} {
-    set gaSet(fail) "There is no SW ID for $gaSet(dbrAppSwPack) ID:$barcode. Verify the Barcode."
-    RLSound::Play fail
-	  Status "Test FAIL"  red
-    DialogBox -aspect 2000 -type Ok -message $gaSet(fail) -icon images/error -title "Get DbrSW Problem"
-    pack $gaGui(frFailStatus)  -anchor w
-	  $gaSet(runTime) configure -text ""
-  	return -1
-  }
-  set dbrSW [string trim [lindex $b [expr {1+$dbrAppSwPackIndx}]]]
-  puts dbrSW:<$dbrSW>
-  set gaSet(dbrApp) $dbrSW
+  set gaSet(general.SWver)     "vcpeos_[set bb]_arm.tar.gz"
+  puts "GetDbrSW barcode:<$barcode> gaSet(general.SWver):<$gaSet(general.SWver)>"
   
-  set dbrBootSwPackIndx [lsearch $b $gaSet(dbrBootSwPack)]  
-  if {$dbrBootSwPackIndx<0} {
-    set gaSet(fail) "There is no Boot SW ID for $gaSet(dbrBootSwPack) ID:$barcode. Verify the Barcode."
-    RLSound::Play fail
-	  Status "Test FAIL"  red
-    DialogBox -aspect 2000 -type Ok -message $gaSet(fail) -icon images/error -title "Get DbrSW Problem"
-    pack $gaGui(frFailStatus)  -anchor w
-	  $gaSet(runTime) configure -text ""
-  	return -1
-  }
-  set dbrBoot [string trim [lindex $b [expr {1+$dbrBootSwPackIndx}]]]
-  puts dbrBoot:<$dbrBoot>
-  set gaSet(dbrBoot) $dbrBoot
+  # if ![info exists gaSet(dbrAppSwPack)] {
+    # set gaSet(dbrAppSwPack) ""
+  # }
+  # set dbrAppSwPackIndx [lsearch $b $gaSet(dbrAppSwPack)]  
+  # if {$dbrAppSwPackIndx<0} {
+    # set gaSet(fail) "There is no SW ID for $gaSet(dbrAppSwPack) ID:$barcode. Verify the Barcode."
+    # RLSound::Play fail
+	  # Status "Test FAIL"  red
+    # DialogBox -aspect 2000 -type Ok -message $gaSet(fail) -icon images/error -title "Get DbrSW Problem"
+    # pack $gaGui(frFailStatus)  -anchor w
+	  # $gaSet(runTime) configure -text ""
+  	# return -1
+  # }
+  # set dbrSW [string trim [lindex $b [expr {1+$dbrAppSwPackIndx}]]]
+  # puts dbrSW:<$dbrSW>
+  # set gaSet(dbrApp) $dbrSW
+  
+  # set dbrBootSwPackIndx [lsearch $b $gaSet(dbrBootSwPack)]  
+  # if {$dbrBootSwPackIndx<0} {
+    # set gaSet(fail) "There is no Boot SW ID for $gaSet(dbrBootSwPack) ID:$barcode. Verify the Barcode."
+    # RLSound::Play fail
+	  # Status "Test FAIL"  red
+    # DialogBox -aspect 2000 -type Ok -message $gaSet(fail) -icon images/error -title "Get DbrSW Problem"
+    # pack $gaGui(frFailStatus)  -anchor w
+	  # $gaSet(runTime) configure -text ""
+  	# return -1
+  # }
+  # set dbrBoot [string trim [lindex $b [expr {1+$dbrBootSwPackIndx}]]]
+  # puts dbrBoot:<$dbrBoot>
+  # set gaSet(dbrBoot) $dbrBoot
   
   pack forget $gaGui(frFailStatus)
   
@@ -631,7 +651,8 @@ proc GetDbrName {mode} {
   global gaSet gaGui
   Status "Please wait for retriving DBR's parameters"
   puts "\r[MyTime] GetDbrName $mode"; update
-  set barcode $gaSet(entDUT)
+  set barcode [string trim $gaSet(entDUT)]
+  set gaSet(idBarcode) $barcode
   
   if [file exists MarkNam_$barcode.txt] {
     file delete -force MarkNam_$barcode.txt
@@ -676,10 +697,10 @@ proc GetDbrName {mode} {
   set txt "[string trim $res]"
   #set gaSet(entDUT) $txt
   set gaSet(entDUT) ""
-  puts "GetDbrName <$txt>"
+  puts "GetDbrName <$txt> < $barcode >"
   
   set initName [regsub -all / $res .]
-  puts "GetDbrName res:<$res>"
+  puts "GetDbrName res:<$res> < $barcode >"
   puts "GetDbrName initName:<$initName>"
   set gaSet(DutFullName) $res
   set gaSet(DutInitName) $initName.tcl
@@ -687,22 +708,25 @@ proc GetDbrName {mode} {
   file delete -force MarkNam_$barcode.txt
   #file mkdir [regsub -all / $res .]
   
+  
+  
   set fil "uutInits/$gaSet(DutInitName)"
   if {[file exists $fil]} {
-    source $fil  
+    #source $fil  
     #UpdateAppsHelpText  
   } else {
-    puts "if the init file doesn't exist, fill the parameters by ? signs"; update
-    set gaSet(general.SWver)     "vcpeos_5.0.6.29_arm.tar.gz"
-    set gaSet(general.flashImg)  "flash-image-1.0.3_1G_.bin"
-    set gaSet(general.pcpes)     "pcpe-general-5.0"
-    set gaSet(dbrAppSwPack)  SW0000
-    set gaSet(dbrApp)        ??
-    set gaSet(dbrBootSwPack) SW0000
-    set gaSet(dbrBoot)       ??
-    SaveUutInit $fil
+    # puts "if the init file doesn't exist, fill the parameters by ? signs"; update
+    # set gaSet(general.SWver)     "vcpeos_5.0.6.29_arm.tar.gz"
+    # set gaSet(general.flashImg)  "flash-image-1.0.3_1G_.bin"
+    # set gaSet(general.pcpes)     "pcpe-general-5.0"
+    # set gaSet(dbrAppSwPack)  SW0000
+    # set gaSet(dbrApp)        ??
+    # set gaSet(dbrBootSwPack) SW0000
+    # set gaSet(dbrBoot)       ??
+    # SaveUutInit $fil
   } 
   wm title . "$gaSet(pair) : $gaSet(DutFullName)"
+  
   
   if [regexp {\.HL\.} $gaSet(DutInitName)] {
     set gaSet(UutOpt) SF1P-4UTP-HL
@@ -710,7 +734,7 @@ proc GetDbrName {mode} {
     set gaSet(UutOpt) SF1P-4UTP
   } elseif [regexp {\.2U\.} $gaSet(DutInitName)] {
     set gaSet(UutOpt) SF1P-2UTP
-  } elseif [regexp {\.ETX\.} $gaSet(DutInitName)] {
+  } elseif [regexp {ETX} $gaSet(DutInitName)] {
     set gaSet(UutOpt) ETX1P
   } else {
     set gaSet(fail) "$gaSet(DutInitName) is not defined"
@@ -726,6 +750,13 @@ proc GetDbrName {mode} {
   pack forget $gaGui(frFailStatus)
   #Status ""
   update
+  RetriveDutFam
+  
+  set gaSet(general.flashImg)  "flash-image-1.0.3_[set gaSet(dutFam.mem)]G_.bin"
+  set gaSet(general.pcpes)     "pcpe-general-5.2"
+  
+  
+  #ToggleCustometSW
   if {$mode=="full"} {
     BuildTests
     
@@ -741,7 +772,9 @@ proc GetDbrName {mode} {
   } else {
     set ret 0
   }
-  puts ""
+  
+  set ret [Linux_SW]
+  puts "\nGetDbrName ret after Linux_SW:<$ret>\n"
   
   focus -force $gaGui(curTest)
   if {$ret==0} {
@@ -755,10 +788,455 @@ proc GetDbrName {mode} {
 # ***************************************************************************
 proc Linux_Eeprom {} {
   global gaSet buffer
-  set eep_file 1.1.txt
-  set eep_content "1q2w3e4r"
+  set fil c:/download/etx1p/eeprom.[set gaSet(pair)].txt
+  set id [open $fil]
+    set eep_content [read $id]
+  close $id
+  set eep_file $::GuiId.txt
   puts "Linux_Eeprom eep_file:<$eep_file> eep_content:<$eep_content>"
-  catch {exec python.exe Etx1p_linuxSwitchSW.py switch_sw $gaSet(linux_srvr_ip) "customer" $eep_file $eep_content} res
+  catch {exec python.exe Etx1p_linuxSwitchSW.py create_eeprom_file $gaSet(linux_srvr_ip) "customer" $eep_file $eep_content} res
   puts "Linux_Eeprom res:<$res>"
-  return $ret
+  return $res
+}
+
+# ***************************************************************************
+# RetriveDutFam
+## set gaSet(DutInitName) SF-1P.E1.DC.4U2S.2RSM.L1.G.LR2.2R.tcl
+## set dutInitName  [regsub -all / SF-1V/E2/12V/4U1S/2RS/L1/G/L1 .].tcl
+# RetriveDutFam $dutInitName
+# ***************************************************************************
+proc RetriveDutFam {{dutInitName ""}} {
+  global gaSet 
+  array unset gaSet dutFam.*
+  #set gaSet(dutFam) NA 
+  #set gaSet(dutBox) NA 
+  if {$dutInitName==""} {
+    set dutInitName $gaSet(DutInitName)
+  }
+  puts "[MyTime] RetriveDutFam $dutInitName"
+  set fieldsL [split $dutInitName .]
+  
+  regexp {([A-Z0-9\-\_]+)\.E?} $dutInitName ma gaSet(dutFam.sf)
+  switch -exact -- $gaSet(dutFam.sf) {
+    SF-1P  - ETX-1P {set gaSet(appPrompt) "-1p#"}
+    VB-101V {set gaSet(appPrompt) "VB101V#"}
+  }
+  
+  if {$gaSet(dutFam.sf)=="ETX-1P"} {
+    set gaSet(dutFam.box) "ETX-1P"
+    regexp {1P\.([A-Z0-9]+)\.} $dutInitName ma gaSet(dutFam.ps)
+  } else {
+    regexp {P\.(E\d)\.} $dutInitName ma gaSet(dutFam.box)  
+    regexp {E\d\.([A-Z0-9]+)\.} $dutInitName ma gaSet(dutFam.ps)
+  }  
+
+  if {$gaSet(dutFam.sf)=="ETX-1P"} {
+    set gaSet(dutFam.wanPorts)  "1SFP1UTP"
+    set gaSet(dutFam.lanPorts)  "4UTP"
+  } else {
+    if {[string match *\.2U\.* $dutInitName]} {
+      set gaSet(dutFam.wanPorts)  "2U"
+    } elseif {[string match *\.4U2S\.* $dutInitName]} {
+      set gaSet(dutFam.wanPorts)  "4U2S"
+    } elseif {[string match *\.5U1S\.* $dutInitName]} {
+      set gaSet(dutFam.wanPorts)  "5U1S"
+    }
+  }
+  
+  if {[string match *\.2RS\.* $dutInitName]} {
+    set gaSet(dutFam.serPort) 2RS
+  } elseif {[string match *\.2RSM\.* $dutInitName]} {
+    set gaSet(dutFam.serPort) 2RSM
+  } elseif {[string match *\.1RS\.* $dutInitName]} {
+    set gaSet(dutFam.serPort) 1RS
+	} elseif {[string match *\.2RMI\.* $dutInitName]} {
+    set gaSet(dutFam.serPort) 2RMI
+	} else {
+    set gaSet(dutFam.serPort) 0
+  }
+  if {[string match *\.CSP\.* $dutInitName]} {
+    set gaSet(dutFam.serPortCsp) CSP
+  } else {
+    set gaSet(dutFam.serPortCsp) 0
+  }
+  
+  
+  if {[string match *\.2PA\.* $dutInitName]} {
+    set gaSet(dutFam.poe) 2PA
+  } elseif {[string match *\.POE\.* $dutInitName]} {
+    set gaSet(dutFam.poe) POE
+  } else {
+    set gaSet(dutFam.poe) 0
+  }
+  
+  set gaSet(dutFam.cell) 0
+  foreach cell [list HSP L1 L2 L3 L4 L450A L450B 5G] {
+    set qty [llength [lsearch -all [split $dutInitName .] $cell]]
+    if $qty {
+      set gaSet(dutFam.cell) $qty$cell
+      break
+    }  
+  }
+  
+  if {[string match *\.G\.* $dutInitName]} {
+    set gaSet(dutFam.gps) G
+  } else {
+    set gaSet(dutFam.gps) 0
+  }
+  
+  if {[string match *\.WF\.* $dutInitName]} {
+    set gaSet(dutFam.wifi) WF
+  } else {
+    set gaSet(dutFam.wifi) 0
+  }
+  
+  if {[string match *\.GO\.* $dutInitName]} {
+    set gaSet(dutFam.dryCon) GO
+  } else {
+    set gaSet(dutFam.dryCon) FULL
+  }
+  
+  if {[string match *\.RG\.* $dutInitName]} {
+    #set gaSet(dutFam.rg) rg
+  } else {
+    #set gaSet(dutFam.rg) 0
+  }
+  
+  set qty [regexp -all {\.(LR[1-6A-Z])\.} $dutInitName ma lora]
+  if $qty {
+    set gaSet(dutFam.lora) $lora
+    switch -exact -- $lora {
+      LR1 {set gaSet(dutFam.lora.region) eu433; set gaSet(dutFam.lora.fam) 4XX; set gaSet(dutFam.lora.band) "EU 433"}
+      LR2 {set gaSet(dutFam.lora.region) eu868; set gaSet(dutFam.lora.fam) 8XX; set gaSet(dutFam.lora.band) "EU 863-870"}
+      LR3 {set gaSet(dutFam.lora.region) au915; set gaSet(dutFam.lora.fam) 9XX; set gaSet(dutFam.lora.band) "AU 915-928 Sub-band 2"}
+      LR4 {set gaSet(dutFam.lora.region) us902; set gaSet(dutFam.lora.fam) 9XX; set gaSet(dutFam.lora.band) "US 902-928 Sub-band 2"}
+      LR6 {set gaSet(dutFam.lora.region) as923; set gaSet(dutFam.lora.fam) 9XX; set gaSet(dutFam.lora.band) "AS 923-925"}
+      LRA {set gaSet(dutFam.lora.region) us915; set gaSet(dutFam.lora.fam) 9XX; set gaSet(dutFam.lora.band) "US 902-928 Sub-band 2"}
+      LRB {set gaSet(dutFam.lora.region) eu868; set gaSet(dutFam.lora.fam) 8XX; set gaSet(dutFam.lora.band) "EU 863-870"}
+      LRC {set gaSet(dutFam.lora.region) eu433; set gaSet(dutFam.lora.fam) 4XX; set gaSet(dutFam.lora.band) "EU 433"}
+    }
+  } else {
+    set gaSet(dutFam.lora) 0
+  }
+  
+  set qty [regexp -all {\.(PLC|PLCD|PLCGO)\.} $dutInitName ma plc]
+  if $qty {
+    set gaSet(dutFam.plc) $plc
+  } else {
+    set gaSet(dutFam.plc) 0
+  }
+  
+  if {[string match *\.2R\.* $dutInitName]} {
+    set gaSet(dutFam.mem) 2
+  } else {
+    set gaSet(dutFam.mem) 1
+  }
+  
+  if {[string match *\.R06\* $dutInitName]} {
+    set gaSet(dutFam.R06) 1
+  } else {
+    set gaSet(dutFam.R06) 0
+  }
+  
+  puts "[parray gaSet dut*]\n" ; update
+#   foreach nam [array names gaSet dutFam.*] {
+#     puts -nonewline "$gaSet($nam)."
+#   }
+#   puts "$dutInitName"
+
+
+}  
+# ***************************************************************************
+# BuildEepromString
+## BuildEepromString newUut
+# ***************************************************************************
+proc BuildEepromString {mode} {
+  global gaSet
+  puts "[MyTime] BuildEepromString $mode"
+  
+  if {$gaSet(dutFam.cell)=="0" && $gaSet(dutFam.wifi)=="0" && $gaSet(dutFam.lora)=="0"} {
+    puts "##no modems, no wifi, no lora"
+    set gaSet(eeprom.mod1man) ""
+    set gaSet(eeprom.mod1type) ""
+    set gaSet(eeprom.mod2man) ""
+    set gaSet(eeprom.mod2type) ""
+  } elseif {[string index $gaSet(dutFam.cell) 0]=="1" && $gaSet(dutFam.wifi)=="0" && $gaSet(dutFam.lora)=="0"} {
+    puts "#### just modem 1, no modem 2 and no wifi, no lora"
+    set gaSet(eeprom.mod1man)  [ModMan $gaSet(dutFam.cell)]
+    set gaSet(eeprom.mod1type) [ModType $gaSet(dutFam.cell)]
+    set gaSet(eeprom.mod2man) ""
+    set gaSet(eeprom.mod2type) ""        
+  } elseif {[string index $gaSet(dutFam.cell) 0]=="1" && $gaSet(dutFam.wifi)=="WF"} {
+    puts "#### modem 1 and wifi instead of modem 2"
+    set gaSet(eeprom.mod1man)  [ModMan $gaSet(dutFam.cell)]
+    set gaSet(eeprom.mod1type) [ModType $gaSet(dutFam.cell)]
+    set gaSet(eeprom.mod2man)  [ModMan  -wifi]
+    set gaSet(eeprom.mod2type) [ModType -wifi]
+  } elseif {$gaSet(dutFam.cell)=="0" && $gaSet(dutFam.wifi)=="WF"} {
+    puts "#### no modem 1, wifi instead of modem 2"
+    set gaSet(eeprom.mod1man)  ""
+    set gaSet(eeprom.mod1type) ""
+    set gaSet(eeprom.mod2man)  [ModMan  -wifi]
+    set gaSet(eeprom.mod2type) [ModType -wifi]    
+  } elseif {[string index $gaSet(dutFam.cell) 0]=="2"} {
+    puts "#### two modems are installed"
+    set gaSet(eeprom.mod1man)  [ModMan $gaSet(dutFam.cell)]
+    set gaSet(eeprom.mod1type) [ModType $gaSet(dutFam.cell)]
+    set gaSet(eeprom.mod2man)  [ModMan $gaSet(dutFam.cell)]
+    set gaSet(eeprom.mod2type) [ModType $gaSet(dutFam.cell)]
+  } elseif {[string index $gaSet(dutFam.cell) 0]=="1" && $gaSet(dutFam.lora)!="0"} {
+    puts "#### modem 1 and LoRa instead of modem 2"
+    set gaSet(eeprom.mod1man)  [ModMan $gaSet(dutFam.cell)]
+    set gaSet(eeprom.mod1type) [ModType $gaSet(dutFam.cell)]
+    set gaSet(eeprom.mod2man)  [ModMan  -lora]
+    set gaSet(eeprom.mod2type) [ModType -lora]
+  } elseif {[string index $gaSet(dutFam.cell) 0]=="0" && $gaSet(dutFam.lora)!="0"} {
+    puts "#### no modem 1 and LoRa instead of modem 1"
+    set gaSet(eeprom.mod1man)  [ModMan  -lora]
+    set gaSet(eeprom.mod1type) [ModType -lora]
+    set gaSet(eeprom.mod2man)  ""
+    set gaSet(eeprom.mod2type) ""
+  }
+  
+  if {$mode=="newUut"} {
+    set ret [GetMac 10]
+    if {$ret=="-1" || $ret=="-2"} {
+      return $ret
+    } 
+    foreach {a b} [split $ret {}] {
+      append mac ${a}${b}:
+    }
+    set mac [string trim $mac :]
+  } else {
+    set mac "NoMac"
+  }
+  
+  puts "BuildEepromString mac:<$mac>"
+  set gaSet(eeprom.mac) $mac
+  #set mac 00:20:D2:AB:76:92
+  set partNum [regsub -all {\.} $gaSet(DutFullName) /]
+  switch -exact -- $gaSet(dutFam.ps) {
+    ACEX {set ps 12V}
+    DC   {set ps 12V}
+    WDC  {set ps WDC-I}
+    12V  {set ps 12V-I}
+  }
+  set gaSet(eeprom.ps) $ps
+  
+  switch -exact -- $gaSet(dutFam.serPort) {
+    0           {set ser1 "";       set ser2 "";      set 1rs485 "";   set 2rs485 ""; set 1cts ""   ; set 2cts ""   }
+    2RS         {set ser1 "RS232";  set ser2 "RS232"; set 1rs485 "";   set 2rs485 ""; set 1cts "YES"; set 2cts "YES"}
+    2RSM - 2RMI {set ser1 "RS485";  set ser2 "RS232"; set 1rs485 "2W"; set 2rs485 ""; set 1cts "YES"; set 2cts "YES"}
+    1RS         {set ser1 "RS232";  set ser2 "";      set 1rs485 "";   set 2rs485 ""; set 1cts "YES"; set 2cts ""   }
+  }
+  set gaSet(eeprom.ser1) $ser1
+  set gaSet(eeprom.ser2) $ser2
+  set gaSet(eeprom.1rs485) $1rs485
+  set gaSet(eeprom.2rs485) $2rs485
+  
+  switch -exact -- $gaSet(dutFam.poe) {
+    0   {set poe ""}
+    2PA   {set poe "2PA"}
+    POE   {set poe "POE"}
+  }
+  set gaSet(eeprom.poe) $poe
+  
+  if {$mode=="newUut"} {
+    set txt ""
+    append txt MODEM_1_MANUFACTURER=${gaSet(eeprom.mod1man)},
+    append txt MODEM_2_MANUFACTURER=${gaSet(eeprom.mod2man)},
+    append txt MODEM_1_TYPE=${gaSet(eeprom.mod1type)},
+    append txt MODEM_2_TYPE=${gaSet(eeprom.mod2type)},
+    append txt MAC_ADDRESS=${mac},
+    
+    #if ![info exist gaSet(mainHW)] {
+    #  set gaSet(mainHW) 0.4
+    #}
+    #if ![info exist gaSet(sub1HW)] {
+    #  set gaSet(sub1HW) 0.1
+    #}
+    if ![info exist gaSet(hwAdd)] {
+      set gaSet(hwAdd) A
+    }
+    set gaSet(hwAdd) [string toupper $gaSet(hwAdd)]
+    
+    if ![info exist gaSet(csl)] {
+      set gaSet(csl) A
+    }
+    set gaSet(csl) [string toupper $gaSet(csl)]
+    
+    
+    if ![info exist gaSet(mainPcbId)] {
+      set gaSet(mainPcbId) "SF-1P.REV0.4I"
+    }
+    set gaSet(mainPcbId) [string toupper $gaSet(mainPcbId)]
+    set res [regexp {REV([\d\.]+)[A-Z]} $gaSet(mainPcbId)  ma gaSet(mainHW)]
+    if {$res==0} {
+      set gaSet(fail) "Fail to retrive MAIN_CARD_HW_VERSION"
+      return -1
+    }
+    
+    if ![info exist gaSet(sub1PcbId)] {
+      set gaSet(sub1PcbId) ""
+    }
+    if {$gaSet(sub1PcbId)!=""} {
+      ## "SF-1V.PS.03"
+      set gaSet(sub1PcbId) [string toupper $gaSet(sub1PcbId)]
+      set res [regexp {PS\.?REV([\d\.]+)[A-Z]} $gaSet(sub1PcbId)  ma gaSet(sub1HW)]
+      if {$res==0} {
+        set gaSet(fail) "Fail to retrive SUB_CARD_1_HW_VERSION"
+        return -1
+      }
+    } else {
+      set gaSet(sub1HW) ""
+    }
+    
+    
+    append txt MAIN_CARD_HW_VERSION=${gaSet(mainHW)},
+    if {$gaSet(mainHW)>="0.6"} {
+      append txt SUB_CARD_1_HW_VERSION=${gaSet(sub1HW)},
+    } else {
+      append txt SUB_CARD_1_HW_VERSION=,
+    }
+    if {$gaSet(mainHW)>="0.6"} {
+      append txt HARDWARE_ADDITION=${gaSet(hwAdd)},
+    }
+    append txt CSL=${gaSet(csl)},
+    append txt PART_NUMBER=${partNum},
+    append txt PCB_MAIN_ID=${gaSet(mainPcbId)},
+    if {$gaSet(mainHW)>="0.6"} {
+      append txt PCB_SUB_CARD_1_ID=${gaSet(sub1PcbId)},
+    } else {
+      append txt PCB_SUB_CARD_1_ID=,
+    }
+    append txt PS=${ps},
+    if {[string match *.HL.*  $gaSet(DutInitName)] || $gaSet(dutFam.sf) == "ETX-1P"} {
+      ## HL option and ETX-1P don't have MicroSD
+      append txt SD_SLOT=,
+    } else {
+      append txt SD_SLOT=YES,
+    }
+    append txt SERIAL_1=${ser1},
+    append txt SERIAL_2=${ser2},
+    append txt SERIAL_1_CTS_DTR=${1cts},
+    append txt SERIAL_2_CTS_DTR=${2cts},
+    append txt RS485_1=${1rs485},
+    append txt RS485_2=${2rs485},
+    #append txt POE=${poe},
+    if {$gaSet(dutFam.sf) == "ETX-1P"} {
+      append txt DRY_CONTACT_IN_OUT=,
+    } else {
+      append txt DRY_CONTACT_IN_OUT=2_2,
+    }
+    if {$gaSet(dutFam.wanPorts) == "4U2S"} {
+      append txt NNI_WAN_1=FIBER,
+      append txt NNI_WAN_2=FIBER,
+      append txt LAN_3_4=YES,
+    } elseif {$gaSet(dutFam.wanPorts) == "2U"} {
+      append txt NNI_WAN_1=,
+      append txt NNI_WAN_2=,
+      append txt LAN_3_4=,
+    } elseif {$gaSet(dutFam.wanPorts) == "5U1S"} {
+      append txt NNI_WAN_1=FIBER,
+      append txt NNI_WAN_2=FIBER,
+      append txt LAN_3_4=YES,
+    } elseif {$gaSet(dutFam.wanPorts) == "1SFP1UTP"} {
+      append txt NNI_WAN_1=FIBER,
+      append txt NNI_WAN_2=COPPER,
+      append txt LAN_3_4=YES,
+    }
+    #append txt USB-A=YES,
+    #append txt M.2-2=,
+    append txt LIST_REF=0.0,
+    #append txt SER_NUM=,
+    append txt END=
+    
+    if [info exists gaSet(log.$gaSet(pair))] {
+      AddToPairLog $gaSet(pair) "$txt"  
+    }
+    
+    set fil c:/download/etx1p/eeprom.[set gaSet(pair)].txt
+    if [file exists $fil] {
+      file copy -force $fil c:/temp/[clock format  [clock seconds] -format  "%Y.%m.%d-%H.%M.%S"].eeprom.[set gaSet(pair)].txt
+      catch {file delete -force $fil}
+    }
+    after 500
+    set id [open $fil w]
+      puts -nonewline $id $txt
+    close $id
+    
+    puts "\n$txt\n"
+  }
+  
+  return 0
+} 
+
+# ***************************************************************************
+# ModMan
+# ***************************************************************************
+proc ModMan {cell} {
+  switch -exact -- [string range $cell 1 end] {
+    HSP - L1 - L2 - L3 - L4 {return QUECTEL}
+    wifi                    {return AZUREWAVE}
+    lora                    {return RAK}
+    L450A                   {return Unitac}
+    L450B                   {return Unitac}
+    5G                      {return "SIERRA WIRELESS"}
+  }
+}  
+# ***************************************************************************
+# ModType
+# ***************************************************************************
+proc ModType {cell} {
+  global gaSet
+  switch -exact -- [string range $cell 1 end] {
+    HSP  {return UC20}
+    L1   {return EC25-E}
+    L2   {return EC25-A}
+    L3   {return EC25-AU}
+    L4   {return EC25-AFFD}
+    wifi {return AW-CM276MA}
+    lora {
+      switch -exact -- $gaSet(dutFam.lora) {
+         LR1 {return EU433}
+         LR2 {return RAK-5146}
+         LR3 {return US915}
+         LR4 {return US915}
+         LR6 {return AS923}
+         LR7 {return EU868}
+         LRA {return 9XX}
+         LRB {return 8XX}
+         LRC {return LRC}
+      }  
+    }
+    L450A {return ML620EU}
+    L450B {return ML660PC}
+    5G    {return EM9191}
+  }
+}    
+
+# ***************************************************************************
+# GetMac
+# ***************************************************************************
+proc GetMac {qty} {
+  global gaSet buffer
+  puts "[MyTime] GetMac $qty MACServer.exe" 
+  set macFile c:/temp/mac.$::GuiId.txt
+  exec $::RadAppsPath/MACServer.exe 0 $qty $macFile 1
+  set ret [catch {open $macFile r} id]
+  if {$ret!=0} {
+    set gaSet(fail) "Open Mac File fail"
+    return -1
+  }
+  set buffer [read $id]
+  close $id
+  file delete $macFile
+  set ret [regexp -all {ERROR} $buffer]
+  if {$ret!=0} {
+    set gaSet(fail) "MACServer ERROR"
+    return -1
+  }
+  set mac [lindex $buffer 0]  ; # 1806F5F4763B
+  puts "GetMac mac:<$mac>"
+  return $mac    
 }

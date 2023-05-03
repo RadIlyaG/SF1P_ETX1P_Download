@@ -163,18 +163,24 @@ def switch_pcpe(srvr_ip, customer, ver, run):
     
 def create_eeprom_file(srvr_ip, customer, eep_file, eep_content):
     client = open_client(srvr_ip)
-    
+    print(f'create_eeprom_file srvr_ip:{srvr_ip}, eep_file:{eep_file}, eep_content:{eep_content}')
     ret = True
-    stdin, stdout, stderr = client.exec_command(f'echo 123456 | sudo -S echo {eep_content} > /var/lib/tftpboot/{eep_file}')
-    #stdin, stdout, stderr = client.exec_command(f'echo {eep_content} > /var/lib/tftpboot/{eep_file}')
+    stdin, stdout, stderr = client.exec_command(f'echo 123456 | sudo -S rm  /var/lib/tftpboot/{eep_file}')
+    time.sleep(1)
+    #ret2 = stdout.readlines()
+    #print(f'ret2:{ret2}')
+   
+    #eep_content = 'MODEM_1_MANUFACTURER=QUECTEL,MODEM_2_MANUFACTURER=RAK,LIST_REF=0.0,END=\n' 
+    #stdin, stdout, stderr = client.exec_command(f'echo 123456 | sudo -S echo {eep_content} > /var/lib/tftpboot/{eep_file}')
+    stdin, stdout, stderr = client.exec_command(f'echo {eep_content} > /var/lib/tftpboot/{eep_file}')
     ret = stdout.readlines()
-    print(f'ret:{ret}')
+    print(f'create_eeprom_file ret:{ret}')
     
     close_client(client)
     return ret 
 
 if __name__ == '__main__':
-    print(sys.argv)
+    print(f'__main__:{sys.argv}')
     func     = sys.argv[1]
     srvr_ip  = sys.argv[2]
     customer = sys.argv[3]

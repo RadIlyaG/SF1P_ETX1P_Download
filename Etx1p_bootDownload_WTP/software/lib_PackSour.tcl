@@ -70,10 +70,26 @@ if ![info exists gaSet(dbrBoot)] {
 if ![info exists gaSet(dbrApp)] {
   set gaSet(dbrApp) -
 }
+if ![info exists gaSet(mainPcbId)] {
+  set gaSet(mainPcbId) "SF-1P.REV0.4I"
+}
+if ![info exists gaSet(sub1PcbId)] {
+  set gaSet(sub1PcbId) ""
+}
+if ![info exists gaSet(hwAdd)] {
+  set gaSet(hwAdd) A
+}
+if ![info exists gaSet(csl)] {
+  set gaSet(csl) B
+}
+
+set gaSet(idBarcode) ""
+
 # set gaSet(linux_srvr_ip.1) 172.18.94.42
 # set gaSet(linux_srvr) 1
 # ToogleLinuxServerIp
 
 GUI
 BuildTests
+ToggleCustometSW
 update

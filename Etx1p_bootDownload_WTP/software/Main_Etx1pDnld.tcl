@@ -37,6 +37,7 @@ proc Testing {} {
   }
   set ti [clock format [clock seconds] -format  "%Y.%m.%d_%H.%M"]
   set gaSet(logFile) c:/logs/logFile_[set ti]_$gaSet(pair).txt
+  
 #   if {[string match {*Leds*} $gaSet(startFrom)] || [string match {*Mac_BarCode*} $gaSet(startFrom)]} {
 #     set ret 0
 #   }
@@ -331,8 +332,13 @@ proc SetEnv {} {
   set ret [Send $com "setenv serverip 10.10.10.1\r" "PCPE>"]
   if {$ret!=0} {return $ret}
   set val 0
-  regexp {dnld-(\d)-} [info host] ma val
-  set ::hostVal $val
+  if {[string match {*ilya-g*} [info host]]} {
+    set ::hostVal ilyagi
+  } else {
+    regexp {dnld-(\d)-} [info host] ma val
+    set ::hostVal $val
+  }
+  set ::GuiId $::hostVal.$gaSet(pair)
   set ret [Send $com "setenv ipaddr 10.10.10.1${::hostVal}$gaSet(pair)\r" "PCPE>"]
   if {$ret!=0} {return $ret}
   set ret [Send $com "setenv gatewayip 10.10.10.1\r" "PCPE>"]
@@ -340,11 +346,30 @@ proc SetEnv {} {
   set ret [Send $com "setenv netmask 255.255.255.0\r" "PCPE>"]
   if {$ret!=0} {return $ret}
   
-  switch -exact -- $gaSet(UutOpt) {
-    ETX1P {set dtb armada-3720-Etx1p.dtb}
-    SF1P-2UTP    {set dtb armada-3720-SF1p.dtb}
-    SF1P-4UTP    {set dtb armada-3720-SF1p_superSet.dtb}
-    SF1P-4UTP-HL {set dtb armada-3720-SF1p_superSet_hl.dtb}
+  # 10:14 28/03/2023
+  # switch -exact -- $gaSet(UutOpt) {
+    # ETX1P {set dtb armada-3720-Etx1p.dtb}
+    # SF1P-2UTP    {set dtb armada-3720-SF1p.dtb}
+    # SF1P-4UTP    {set dtb armada-3720-SF1p_superSet.dtb}
+    # SF1P-4UTP-HL {set dtb armada-3720-SF1p_superSet_hl.dtb}
+  # }
+  if {$gaSet(dutFam.sf)=="ETX-1P"} {
+    set dtb armada-3720-Etx1p.dtb
+  } elseif {$gaSet(dutFam.sf)=="SF-1P"} {
+    if {$gaSet(dutFam.wanPorts) == "2U"} {
+      set dtb armada-3720-SF1p.dtb
+    } else {
+      if {[string match *.HL.*  $gaSet(DutInitName)]} {
+        set dtb armada-3720-SF1p_superSet_hl.dtb
+      } elseif {[string match *.R06*  $gaSet(DutInitName)]} {
+        set dtb armada-3720-SF1p_superSet_cp2.dtb
+      } else {
+        set dtb armada-3720-SF1p_superSet.dtb
+      }
+    }
+  }
+  if [info exists gaSet(log.$gaSet(pair))] {
+    AddToPairLog $gaSet(pair) "Armada: $dtb"  
   }
   set ret [Send $com "setenv fdt_name boot/$dtb\r" "PCPE>"]
   ## 28/07/2021 11:41:00set ret [Send $com "setenv fdt_name boot/armada-3720-Etx1p.dtb\r" "PCPE>"]
@@ -393,13 +418,23 @@ proc Download_FlashImage {} {
     set ret [Send $com \r\r "PCPE>" 1]
     if {$ret==0} {break}
   }
-  # puts "\n++++++++++++++++++++  printenv before Download_FlashImage +++++++++++++++++++++++++++++++"
-  # set ret [Send $com "printenv\r" "PCPE>"] 
-  # update
   
   set gaSet(fail) "Download FlashImage Fail"
-  #set ret [Send $com "bubt flash-image.bin spi tftp\r" "Done"]
-  set ret [Send $com "bubt $gaSet(general.flashImg) spi tftp\r" "Done"]
+  
+  # 10:14 28/03/2023
+  # set flashImg $gaSet(general.flashImg)
+  
+  switch $gaSet(dutFam.mem) {
+    1 {set flashImg "flash-image-1.0.3_1G_.bin"}
+    2 {set flashImg "flash-image-1.0.3_2G_.bin"}
+  }
+  set gaSet(general.flashImg) $flashImg
+  
+  if [info exists gaSet(log.$gaSet(pair))] {
+    AddToPairLog $gaSet(pair) "Flash Image: $flashImg"  
+  }
+  
+  set ret [Send $com "bubt $flashImg spi tftp\r" "Done"]
   
   if {[string match "*Done*" $buffer]} {
     set ret 0
@@ -407,11 +442,7 @@ proc Download_FlashImage {} {
     set ret [ReadCom $com "Done" 120]
   }
   
-  # puts "\n++++++++++++++++++++  printenv after Download_FlashImage +++++++++++++++++++++++++++++++"
-  # set ret [Send $com "printenv\r" "PCPE>"] 
-  # update
-  return $ret
-  
+  return $ret  
 }
 
 # ***************************************************************************
@@ -444,6 +475,10 @@ proc Download_BootParamImage {} {
   puts "\nDownload_BootParamImage gaSet(bootScript):$gaSet(bootScript)" ; update
   set ret [Send $com "tftpboot \$loadaddr boot-scripts/$gaSet(bootScript)\r" "done"] 
   #set ret [Send $com "tftpboot \$loadaddr boot-scripts/set_boot_param_etx_general_5.2.img\r" "done"]
+  
+  if [info exists gaSet(log.$gaSet(pair))] {
+    AddToPairLog $gaSet(pair) "Boot Param Image: $gaSet(bootScript)"  
+  }
   
   if {[string match "*done*" $buffer]} {
     set ret 0
@@ -553,11 +588,28 @@ proc SetEthEnv {} {
   
   Status "Set Environment"
   set gaSet(fail) "Set Eth Environment Fail"
-  switch -exact -- $gaSet(UutOpt) {
-    ETX1P        {set dtb armada-3720-Etx1p.dtb}
-    SF1P-2UTP    {set dtb armada-3720-SF1p.dtb}
-    SF1P-4UTP    {set dtb armada-3720-SF1p_superSet.dtb}
-    SF1P-4UTP-HL {set dtb armada-3720-SF1p_superSet_hl.dtb}
+  
+  # 10:15 28/03/2023
+  # switch -exact -- $gaSet(UutOpt) {
+    # ETX1P        {set dtb armada-3720-Etx1p.dtb}
+    # SF1P-2UTP    {set dtb armada-3720-SF1p.dtb}
+    # SF1P-4UTP    {set dtb armada-3720-SF1p_superSet.dtb}
+    # SF1P-4UTP-HL {set dtb armada-3720-SF1p_superSet_hl.dtb}
+  # }
+  if {$gaSet(dutFam.sf)=="ETX-1P"} {
+    set dtb armada-3720-Etx1p.dtb
+  } elseif {$gaSet(dutFam.sf)=="SF-1P"} {
+    if {$gaSet(dutFam.wanPorts) == "2U"} {
+      set dtb armada-3720-SF1p.dtb
+    } else {
+      if {[string match *.HL.*  $gaSet(DutInitName)]} {
+        set dtb armada-3720-SF1p_superSet_hl.dtb
+      } elseif {[string match *.R06*  $gaSet(DutInitName)]} {
+        set dtb armada-3720-SF1p_superSet_cp2.dtb
+      } else {
+        set dtb armada-3720-SF1p_superSet.dtb
+      }
+    }
   }
   ## 28/07/2021 09:33:09 set ret [Send $com "setenv fdt_name boot/armada-3720-Etx1p.dtb\r" "PCPE>"]
   set ret [Send $com "setenv fdt_name boot/$dtb\r" "PCPE>"]
@@ -726,7 +778,16 @@ proc RunBootNet {} {
       set ret [ReadCom $com "user>" $maxWait]
       if {$ret==0} {break}
       if {$ret=="-2"} {break}
-      if {$ret=="linux" || $ret=="sys_reboot"} {
+      
+      ## 15:43 30/04/2023
+      if {$ret=="linux"} {
+        set ret -1
+        set gaSet(fail) "RAD OS open fail"
+        break
+      }  
+      if {$ret=="linux" || $ret=="sys_reboot"} {}
+      
+      if {$ret=="sys_reboot"} {
         if {$ret=="linux"} {
           OpenPio 
           Power all off
@@ -1067,6 +1128,10 @@ proc ID {} {
     return -1
   }
   puts "cust:<$cust> swid:<$swid> uut_var:<$uut_var> gui_ver:<$gui_ver>"
+  
+  if [info exists gaSet(log.$gaSet(pair))] {
+    AddToPairLog $gaSet(pair) "SW version: $uut_var"  
+  }
   if {$gui_ver!=$uut_var} {
     set gaSet(fail) "\'Sw\' is \'$uut_var\'. Should be \'$gui_ver\'"
     return -1
@@ -1145,7 +1210,7 @@ proc Read_Linux {} {
   } 
   puts "Read_Linux customer:<$customer> uut:<$uut>"
   
-  set uut SF1P
+  ## 11:01 27/04/2023 set uut SF1P
   set tt [expr {[lindex [time {catch {exec python.exe Etx1p_linuxSwitchSW.py list_sw $gaSet(linux_srvr_ip)  customer ver $uut} res}] 0] /1000.0}]
   puts "Read_Linux <$tt> <$res>"
 
@@ -1237,16 +1302,27 @@ proc Eeprom {} {
   set com $gaSet(comDut)  
   set customer $gaSet(customer)
   set appl $gaSet($customer.SWver)
-  if {$gaSet(UutOpt) eq "ETX1P"} {
-    set eep_fi ETX-1PACEX1SFP1UTP4UTP.txt
-  } elseif {$gaSet(UutOpt) eq "SF1P-2UTP"} {
-    set eep_fi SF-1PE1ACEX2U2RS.txt
-  } elseif {$gaSet(UutOpt) eq "SF1P-4UTP"} {
-    set eep_fi SF-1PE1DC4U2S2RS.txt
-    #set eep_fi SF-1PE1DC4U2S2RS_BACKUP.txt 18:18:18:18:18:19
-  } elseif {$gaSet(UutOpt) eq "SF1P-4UTP-HL"} {
-    set eep_fi SF-1PE1DC2R4U2S2RSL1GLR2HL.txt
+  
+  # 10:15 28/03/2023
+  # if {$gaSet(UutOpt) eq "ETX1P"} {
+    # set eep_fi ETX-1PACEX1SFP1UTP4UTP.txt
+  # } elseif {$gaSet(UutOpt) eq "SF1P-2UTP"} {
+    # set eep_fi SF-1PE1ACEX2U2RS.txt
+  # } elseif {$gaSet(UutOpt) eq "SF1P-4UTP"} {
+    # set eep_fi SF-1PE1DC4U2S2RS.txt
+    # #set eep_fi SF-1PE1DC4U2S2RS_BACKUP.txt 18:18:18:18:18:19
+  # } elseif {$gaSet(UutOpt) eq "SF1P-4UTP-HL"} {
+    # set eep_fi SF-1PE1DC2R4U2S2RSL1GLR2HL.txt
+  # }
+  
+  set ret [BuildEepromString newUut]
+  puts "\nRet of BuildEepromString:<$ret>"
+  if {$ret!=0} {
+    return $ret
   }
+  Linux_Eeprom
+  set eep_fi $::GuiId.txt
+  
   
   set gaSet(fail) "No \'PCPE\' respond"
   for {set i 1} {$i<=20} {incr i} {
@@ -1258,15 +1334,6 @@ proc Eeprom {} {
   }
   
   if {$ret==0} {
-#     set pa $gaSet(pair)
-#     set dnl_eep_fi ${pa}_${eep_fi}
-#     if [file exists C:/download/temp/$dnl_eep_fi] {
-#       catch {file delete -force C:/download/temp/$dnl_eep_fi} res
-#       puts "res after file delete -force C:/download/temp/$dnl_eep_fi: <$res>"
-#       after 500
-#     } 
-#     catch {file copy -force C:/download/1p/$eep_fi C:/download/temp/$dnl_eep_fi} res
-#     puts "res after file copy -force C:/download/1p/$eep_fi C:/download/temp/$dnl_eep_fi: <$res>"
     set gaSet(fail) "Programming eEprom fail"
     set ret [Send $com "iic e 52\r" "PCPE>" 20]  
     if {$ret!=0} {return $ret} 
