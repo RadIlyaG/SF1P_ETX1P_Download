@@ -421,14 +421,13 @@ proc Download_FlashImage {} {
   
   set gaSet(fail) "Download FlashImage Fail"
   
-  # 10:14 28/03/2023
-  # set flashImg $gaSet(general.flashImg)
+  set flashImg $gaSet(general.flashImg)
   
-  switch $gaSet(dutFam.mem) {
-    1 {set flashImg "flash-image-1.0.3_1G_.bin"}
-    2 {set flashImg "flash-image-1.0.3_2G_.bin"}
-  }
-  set gaSet(general.flashImg) $flashImg
+  # switch $gaSet(dutFam.mem) {
+    # 1 {set flashImg "flash-image-1.0.3_1G_.bin"}
+    # 2 {set flashImg "flash-image-1.0.3_2G_.bin"}
+  # }
+  # set gaSet(general.flashImg) $flashImg
   
   if [info exists gaSet(log.$gaSet(pair))] {
     AddToPairLog $gaSet(pair) "Flash Image: $flashImg"  
