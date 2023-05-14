@@ -77,10 +77,10 @@ if ![info exists gaSet(sub1PcbId)] {
   set gaSet(sub1PcbId) ""
 }
 if ![info exists gaSet(hwAdd)] {
-  set gaSet(hwAdd) A
+  set gaSet(hwAdd) ""
 }
 if ![info exists gaSet(csl)] {
-  set gaSet(csl) B
+  set gaSet(csl) C
 }
 
 set gaSet(idBarcode) ""

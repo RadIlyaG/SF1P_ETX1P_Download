@@ -808,6 +808,7 @@ proc Linux_Eeprom {} {
 proc RetriveDutFam {{dutInitName ""}} {
   global gaSet 
   array unset gaSet dutFam.*
+  set gaSet(hwAdd) ""
   #set gaSet(dutFam) NA 
   #set gaSet(dutBox) NA 
   if {$dutInitName==""} {
@@ -1099,6 +1100,7 @@ proc BuildEepromString {mode} {
       append txt SUB_CARD_1_HW_VERSION=,
     }
     if {$gaSet(mainHW)>="0.6"} {
+      set gaSet(hwAdd) "C"
       append txt HARDWARE_ADDITION=${gaSet(hwAdd)},
     }
     append txt CSL=${gaSet(csl)},

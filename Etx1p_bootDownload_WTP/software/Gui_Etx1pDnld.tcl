@@ -192,7 +192,7 @@ proc GUI {} {
         
         
         set labHARDWARE_ADDITION [ttk::label $fu.labHARDWARE_ADDITION -text "HARDWARE_ADDITION"]
-        set gaGui(entHARDWARE_ADDITION) [ttk::entry $fu.entHARDWARE_ADDITION -justify center -textvariable gaSet(hwAdd)]  
+        set gaGui(entHARDWARE_ADDITION) [ttk::entry $fu.entHARDWARE_ADDITION -justify center -textvariable gaSet(hwAdd) -state disabled]  
 
         set labCSL [ttk::label $fu.labCSL -text "CSL"]
         set gaGui(entCSL) [ttk::entry $fu.entCSL -justify center -textvariable gaSet(csl)] 
@@ -341,6 +341,7 @@ proc ButRun {} {
   focus $gaGui(tbrun) 
   set gaSet(runStatus) ""
   set gaSet(1.barcode1.IdMacLink) ""
+  set gaSet(hwAdd) ""
   
   set gaSet(act) 1
   console eval {.console delete 1.0 end}
