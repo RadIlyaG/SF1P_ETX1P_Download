@@ -589,8 +589,8 @@ proc GetDbrSW {barcode} {
   #set gaSet(dbrSWver) $bb
   after 1000
   
-  # set swTxt [glob SW*_$barcode.txt]
-  # catch {file delete -force $swTxt}
+  set swTxt [glob SW*_$barcode.txt]
+  catch {file delete -force $swTxt}
   
   set gaSet(general.SWver)     "vcpeos_[set bb]_arm.tar.gz"
   puts "GetDbrSW barcode:<$barcode> gaSet(general.SWver):<$gaSet(general.SWver)>"

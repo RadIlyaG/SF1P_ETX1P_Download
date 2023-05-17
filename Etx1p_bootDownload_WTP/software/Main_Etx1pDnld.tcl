@@ -366,6 +366,15 @@ proc SetEnv {} {
       } else {
         set dtb armada-3720-SF1p_superSet.dtb
       }
+      set mainPcbId [string toupper $gaSet(mainPcbId)]
+      set res [regexp {REV([\d\.]+)[A-Z]} $mainPcbId  ma mainHW]
+      if {$res==0} {
+        set gaSet(fail) "Fail to retrive MAIN_CARD_HW_VERSION"
+        return -1
+      }
+      if {$mainHW >= 0.6} {
+        set dtb armada-3720-SF1p_superSet_cp2.dtb
+      }
     }
   }
   if [info exists gaSet(log.$gaSet(pair))] {
@@ -607,6 +616,15 @@ proc SetEthEnv {} {
         set dtb armada-3720-SF1p_superSet_cp2.dtb
       } else {
         set dtb armada-3720-SF1p_superSet.dtb
+      }
+      set mainPcbId [string toupper $gaSet(mainPcbId)]
+      set res [regexp {REV([\d\.]+)[A-Z]} $mainPcbId  ma mainHW]
+      if {$res==0} {
+        set gaSet(fail) "Fail to retrive MAIN_CARD_HW_VERSION"
+        return -1
+      }
+      if {$mainHW >= 0.6} {
+        set dtb armada-3720-SF1p_superSet_cp2.dtb
       }
     }
   }
