@@ -786,7 +786,7 @@ proc RunBootNet {} {
   }
   
   if {$ret==0} {
-    for {set us 1} {$us <= 3} {incr us} {
+    for {set us 1} {$us <= 1} {incr us} {
       puts ""
       Status "Boot up to \'user>\'"
       puts "[MyTime] UserLoop $us" ; update
@@ -802,6 +802,11 @@ proc RunBootNet {} {
         set gaSet(fail) "RAD OS open fail"
         break
       }  
+      if {$ret=="FileNotFound"} {
+        set ret -1
+        set gaSet(fail) " File not found boot/Image or boot/armada.. "
+        break
+      }
       if {$ret=="linux" || $ret=="sys_reboot"} {}
       
       if {$ret=="sys_reboot"} {

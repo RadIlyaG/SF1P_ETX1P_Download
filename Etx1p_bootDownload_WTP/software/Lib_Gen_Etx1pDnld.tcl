@@ -387,7 +387,10 @@ proc ReadCom {com inStr {timeout 10}} {
       set ret KernelPanic
       break
     }
-    
+    if {$inStr=="user>" && ([regexp {File not found boot/Image} $buffer ma] || [regexp {File not found boot/armada} $buffer ma])} {
+      set ret FileNotFound
+      break
+    }
     
     after 1000
     set secNow [clock seconds]
