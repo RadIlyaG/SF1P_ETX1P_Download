@@ -708,6 +708,8 @@ proc RunBootNet {} {
   set ret [Send $com "printenv config_nfs\r" "PCPE>"]   
   puts "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
   update
+  catch {exec python.exe Etx1p_linuxSwitchSW.py showGeneralRootImagesApp $gaSet(linux_srvr_ip) general ver run} res
+  puts "[MyTime] Linux_showGeneralRootImagesApp res:<$res>"; update
   
   if {$ret==0} {
     Status "Boot up to \'exiting hardware virtualization\'"

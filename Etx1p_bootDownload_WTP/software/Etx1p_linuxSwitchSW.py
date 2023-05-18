@@ -178,6 +178,14 @@ def create_eeprom_file(srvr_ip, customer, eep_file, eep_content):
     
     close_client(client)
     return ret 
+    
+def showGeneralRootImagesApp(srvr_ip, customer, appl, uut):
+    client = open_client(srvr_ip) 
+    stdin, stdout, stderr = client.exec_command(f'echo 123456 | sudo -S ls /srv/nfs/pcpe-{customer}/root/Images/*.tar.gz')
+    ret = stdout.readlines()
+    close_client(client)
+    print(f'Ret of showGeneralRootImagesApp:{ret}')
+    return ret     
 
 if __name__ == '__main__':
     print(f'__main__:{sys.argv}')
