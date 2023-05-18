@@ -709,7 +709,8 @@ proc RunBootNet {} {
   puts "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
   update
   catch {exec python.exe Etx1p_linuxSwitchSW.py showGeneralRootImagesApp $gaSet(linux_srvr_ip) general ver run} res
-  puts "[MyTime] Linux_showGeneralRootImagesApp res:<$res>"; update
+  puts "\n[MyTime] Linux_showGeneralRootImagesApp res:<$res>"; update
+  AddToPairLog $gaSet(pair) "$res"
   
   if {$ret==0} {
     Status "Boot up to \'exiting hardware virtualization\'"
