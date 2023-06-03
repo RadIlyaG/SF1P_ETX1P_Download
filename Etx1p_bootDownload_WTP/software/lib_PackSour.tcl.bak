@@ -17,12 +17,11 @@ package require RLTime
 package require RLStatus
 package require RLExPio
 package require RLCom
-package require RLSound 
-}
 package require BWidget
 package require img::ico
+package require RLSound 
 package require twapi
-
+}
 
 source Gui_Etx1pDnld.tcl
 source Lib_Gen_Etx1pDnld.tcl
