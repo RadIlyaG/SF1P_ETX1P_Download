@@ -1,0 +1,14 @@
+set gaSet(dnldMode) 0
+set gaSet(pioType)  Ex
+set gaSet(DutInitName) "ETX-1P.tcl"
+set gaSet(DutFullName) "ETX-1P"
+set gaSet(customer) "general"
+set gaSet(safaricom.SWver) "vcpeos_5.0.1.229.5_arm.tar.gz"
+set gaSet(general.SWver) "vcpeos_5.0.6.29_arm.tar.gz"
+set gaSet(downloadUbootAnyWay) "Yes"
+set gaSet(UutOpt) "SF1P-4UTP"
+set gaSet(general.pcpes) "pcpe-general-5.0"
+set gaSet(general.flashImg) "flash-image-1.0.3_1G_.bin"
+set gaSet(bootScript) "set_boot_param_etx_general.img"
+set gaSet(actGen) "general-5.0"
+set gaSet(linux_srvr_ip) "172.18.94.40"
