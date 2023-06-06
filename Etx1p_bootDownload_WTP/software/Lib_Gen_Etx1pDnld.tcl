@@ -776,6 +776,12 @@ proc GetDbrName {mode} {
     set ret 0
   }
   
+  set csl [RetriveIdTraceData $barcode CSLByBarcode]
+  puts "GetDbrName csl:<$csl>"
+  if {$csl!="-1"} {
+    set gaSet(csl) $csl
+  }
+  
   set ret [Linux_SW]
   puts "\nGetDbrName ret after Linux_SW:<$ret>\n"
   
@@ -1018,7 +1024,11 @@ proc BuildEepromString {mode} {
   puts "BuildEepromString mac:<$mac>"
   set gaSet(eeprom.mac) $mac
   #set mac 00:20:D2:AB:76:92
-  set partNum [regsub -all {\.} $gaSet(DutFullName) /]
+  
+  #set partNum [regsub -all {\.} $gaSet(DutFullName) /]
+  set partNum [RetriveIdTraceData $gaSet(idBarcode) MKTItem4Barcode]
+  puts "BuildEepromString partNum:<$partNum>"
+  
   switch -exact -- $gaSet(dutFam.ps) {
     ACEX {set ps 12V}
     DC   {set ps 12V}
@@ -1244,4 +1254,67 @@ proc GetMac {qty} {
   set mac [lindex $buffer 0]  ; # 1806F5F4763B
   puts "GetMac mac:<$mac>"
   return $mac    
+}
+
+## RetriveIdTraceData DF100148093 CSLByBarcode
+## RetriveIdTraceData DF100148093 MKTItem4Barcode
+## RetriveIdTraceData 21181408    PCBTraceabilityIDData
+## RetriveIdTraceData TO300315253 OperationItem4Barcode
+# ***************************************************************************
+# RetriveIdTaceData
+# ***************************************************************************
+proc RetriveIdTraceData {args} {
+  global gaSet
+  set gaSet(fail) ""
+  puts "RetriveIdTaceData $args"
+  set barc [format %.11s [lindex $args 0]]
+  
+  set command [lindex $args 1]
+  switch -exact -- $command {
+    CSLByBarcode          {set barcode $barc  ; set traceabilityID null}
+    PCBTraceabilityIDData {set barcode null   ; set traceabilityID $barc}
+    MKTItem4Barcode       {set barcode $barc  ; set traceabilityID null}
+    OperationItem4Barcode {set barcode $barc  ; set traceabilityID null}
+    default {set gaSet(fail) "Wrong command: \'$command\'"; return -1}
+  }
+  set url "https://ws-proxy01.rad.com:8445/ATE_WS/ws/rest/"
+  set param [set command]\?barcode=[set barcode]\&traceabilityID=[set traceabilityID]
+  append url $param
+  puts "url:<$url>"
+  set tok [::http::geturl $url -headers [list Authorization "Basic [base64::encode webservices:radexternal]"]]
+  update
+  set st [::http::status $tok]
+  set nc [::http::ncode $tok]
+  if {$st=="ok" && $nc=="200"} {
+    #puts "Get $command from $barc done successfully"
+  } else {
+    set gaSet(fail) "http::status: <$st> http::ncode: <$nc>"; return -1
+  }
+  upvar #0 $tok state
+  #parray state
+  #puts "$state(body)"
+  set body $state(body)
+  ::http::cleanup $tok
+  
+  set re {[{}\[\]\,\t\:\"]}
+  set tt [regsub -all $re $body " "]
+  set ret [regsub -all {\s+}  $tt " "]
+  
+  return [lindex $ret end]
+}
+
+# ***************************************************************************
+# GetPcbID
+# ***************************************************************************
+proc GetPcbID {board} {
+  global gaSet
+  set gaSet([set board]PcbId) "" ; update
+  set pcbName [RetriveIdTraceData $gaSet([set board]PcbIdBarc)   PCBTraceabilityIDData]
+  puts "GetPcbID <$board> <$pcbName>" 
+  if {$pcbName=="-1"} {
+    return -1
+  } else {
+    set gaSet([set board]PcbId) $pcbName
+    return 0
+  }
 }

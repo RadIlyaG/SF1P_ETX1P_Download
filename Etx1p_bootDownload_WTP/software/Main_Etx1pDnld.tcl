@@ -52,6 +52,8 @@ proc Testing {} {
   update
     
   AddToPairLog $gaSet(pair) "********* DUT start *********"
+  AddToPairLog $gaSet(pair) " $gaSet(idBarcode) " 
+  AddToPairLog $gaSet(pair) " $gaSet(DutFullName) "
   puts "RunTests1 gaSet(startFrom):$gaSet(startFrom)"
 
   foreach numberedTest $lRunTests {
@@ -63,6 +65,8 @@ proc Testing {} {
     $gaSet(startTime) configure -text "$startTime ."
     AddToPairLog $gaSet(pair) "Test \'$testName\' started"
     set ret [$testName]
+    
+    catch {CaptureConsole}
     
     if {$ret==0} {
       set retTxt "PASS."
@@ -147,25 +151,38 @@ proc Update_Uboot {} {
     }
   }
   
-  set filesPath $gaSet(uBootFilesPath)
+  set filesPath $gaSet(uBootFilesPath)/[set gaSet(dutFam.mem)]G
+  puts "filesPath:<$filesPath>"
   ##set gaSet(downloadUbootAnyWay) No
   foreach fil {TIM_ATF.bin wtmi_h.bin boot-image_h.bin} { 
-    if {![file exists $wtpPath/$fil] || ([file mtime $filesPath/$fil] != [file mtime $wtpPath/$fil])} {
+    ## 15:57 29/05/2023 if {![file exists $wtpPath/$fil] || ([file mtime $filesPath/$fil] != [file mtime $wtpPath/$fil])} {}
+    set sourceMtime [file mtime $filesPath/$fil]
+    set sourceHumanmtime [clock format $sourceMtime -format "%d/%m/%Y %H:%M:%S"]
+    set destMtime [file mtime $wtpPath/$fil]
+    if {($sourceMtime != $destMtime)} {
       set gaSet(downloadUbootAnyWay) Yes 
-      if [catch {file copy $filesPath/$fil $wtpPath} res] {
+      if [catch {file copy -force $filesPath/$fil $wtpPath} res] {
         set gaSet(fail) "Copy $fil fail ($res)"
         return -1
-      } 
+      } else {
+        
+        puts "$fil copied. Res:<$res> MTime: $sourceHumanmtime"
+      }
+    } else {
+      puts "$fil Same MTime: $sourceHumanmtime"
     }
+    update
   }
+  after 2000
   puts [clock seconds] 
   catch {file delete -force log$gaSet(pair).txt}
   set cmd "$wtpPath/WtpDownload$gaSet(pair).exe -P UART -C $com -R 115200 \
       -B $wtpPath/TIM_ATF.bin -I $wtpPath/boot-image_h.bin -I $wtpPath/wtmi_h.bin  -E > log$gaSet(pair).txt" 
   puts "\n<$cmd>\n" ; update
   
-  catch {RLCom::Close $com}
-  catch {RLEH::Close}
+  # 16:03 29/05/2023
+  # catch {RLCom::Close $com}
+  # catch {RLEH::Close}
   
 #   RLEH::Open
 #   OpenPio 
@@ -177,12 +194,13 @@ proc Update_Uboot {} {
 #   update
 #   after 1000
   
-  RLEH::Open
-  set ret [RLCom::Open $com 115200 8 NONE 1]
-  if {$ret!=0} {
-    set gaSet(fail) "Open COM $com fail"
-     return $ret
-  }
+  # 16:03 29/05/2023
+  # RLEH::Open
+  # set ret [RLCom::Open $com 115200 8 NONE 1]
+  # if {$ret!=0} {
+    # set gaSet(fail) "Open COM $com fail"
+     # return $ret
+  # }
   
   Status "Reaching E"
   set ret -1
@@ -240,6 +258,7 @@ proc Update_Uboot {} {
   
   catch {RLCom::Close $com}
   catch {RLEH::Close}  
+  puts "[MyTime] COM $com closed" ; update
   
 #   set cmd "C:/WTP_Windows_Tools/WtpDownload.exe -P UART -C $com -R 115200 \
 #       -B $filesPath/TIM_ATF.bin -I $filesPath/wtmi_h.bin -I $filesPath/boot-image_h.bin -E"
@@ -272,7 +291,7 @@ proc Update_Uboot {} {
     set id [open $log r]
     set lines [read $id]
     close $id
-    puts "\n<$lines>\n" ; update    
+    #puts "\n<$lines>\n" ; update    
   }
   puts "lines:<$lines>" ; update
   if {[string match {*Download file complete for image 1*} $lines] && \
@@ -292,19 +311,27 @@ proc Update_Uboot {} {
     set gaSet(fail) "Open COM $com fail"
     return $ret
   }
+  puts "[MyTime] COM $com Opened" ; update
+  
+  set ::buff ""
+  RLCom::Read $com ::buff
+  
   
   set ret -1
   set gaSet(fail) "No \'PCPE\' respond"
   for {set i 1} {$i<=25} {incr i} {
     set ret [Send $com \r\r "PCPE>" 1]
+    append ::buff $buffer
     if {$ret==0} {break}
   }
   
 #   catch {RLCom::Close $com}
 #   catch {RLEH::Close}
   
+  puts "\n\n[MyTime] All messages after WTP:\n$::buff\n"
   if {$ret!=0} {
     set gaSet(fail) "No \'PCPE\' after Uboot download"
+    #catch {CaptureConsole}
     return $ret
   } 
   

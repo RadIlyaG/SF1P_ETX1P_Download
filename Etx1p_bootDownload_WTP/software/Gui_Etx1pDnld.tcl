@@ -185,19 +185,24 @@ proc GUI {} {
             -values [list ETX1P SF1P-2UTP SF1P-4UTP SF1P-4UTP-HL] -justify center]
         
         set labPCB_MAIN_ID [ttk::label $fu.labPCB_MAIN_ID -text "PCB_MAIN_ID"]
-        set gaGui(entPCB_MAIN_ID) [ttk::entry $fu.entPCB_MAIN_ID -justify center -textvariable gaSet(mainPcbId)] 
+        set gaGui(entPCB_MAIN_IDbarc) [ttk::entry $fu.entPCB_MAIN_IDbarc -justify center -textvariable gaSet(mainPcbIdBarc)] 
+        bind $gaGui(entPCB_MAIN_IDbarc) <Return> {GetPcbID main}   
+        set gaGui(entPCB_MAIN_ID) [ttk::entry $fu.entPCB_MAIN_ID -justify center -textvariable gaSet(mainPcbId)] ; #  -state disabled
         
         set labPCB_SUB_CARD_1_ID [ttk::label $fu.labPCB_SUB_CARD_1_ID -text "PCB_SUB_CARD_1_ID"]
-        set gaGui(entPCB_SUB_CARD_1_ID) [ttk::entry $fu.entPCB_SUB_CARD_1_ID -justify center -textvariable gaSet(sub1PcbId)] 
+        set gaGui(entPCB_SUB_CARD_1_IDbarc) [ttk::entry $fu.entPCB_SUB_CARD_1_IDbarc -justify center -textvariable gaSet(sub1PcbIdBarc)] 
+        bind $gaGui(entPCB_SUB_CARD_1_IDbarc) <Return> {GetPcbID sub1} 
+        set gaGui(entPCB_SUB_CARD_1_ID) [ttk::entry $fu.entPCB_SUB_CARD_1_ID -justify center -textvariable gaSet(sub1PcbId)]  ; #  -state disabled
         
         
         set labHARDWARE_ADDITION [ttk::label $fu.labHARDWARE_ADDITION -text "HARDWARE_ADDITION"]
         set gaGui(entHARDWARE_ADDITION) [ttk::entry $fu.entHARDWARE_ADDITION -justify center -textvariable gaSet(hwAdd) -state disabled]  
 
         set labCSL [ttk::label $fu.labCSL -text "CSL"]
-        set gaGui(entCSL) [ttk::entry $fu.entCSL -justify center -textvariable gaSet(csl)] 
+        set gaGui(entCSL) [ttk::entry $fu.entCSL -justify center -textvariable gaSet(csl)]  ; #  -state disabled
         
-        #grid $labUutOpt $gaGui(cbUutOpt)  -padx 3
+        #grid $labPCB_MAIN_ID       $gaGui(entPCB_MAIN_IDbarc) $gaGui(entPCB_MAIN_ID)        -sticky w -padx 2 -pady 2
+        #grid $labPCB_SUB_CARD_1_ID $gaGui(entPCB_SUB_CARD_1_IDbarc) $gaGui(entPCB_SUB_CARD_1_ID)  -sticky w -padx 2 -pady 2
         grid $labPCB_MAIN_ID       $gaGui(entPCB_MAIN_ID)        -sticky w -padx 2 -pady 2
         grid $labPCB_SUB_CARD_1_ID $gaGui(entPCB_SUB_CARD_1_ID)  -sticky w -padx 2 -pady 2
         grid $labHARDWARE_ADDITION $gaGui(entHARDWARE_ADDITION)  -sticky w -padx 2 -pady 2
@@ -303,13 +308,14 @@ proc Quit {} {
 #** CaptureConsole
 #***************************************************************************
 proc CaptureConsole {} {
-  console eval { 
+ console eval { 
+    set b [.console get 1.0 1.15]
     set ti [clock format [clock seconds] -format  "%Y.%m.%d_%H.%M.%S"]
     if ![file exists c:/temp] {
       file mkdir c:/temp
       after 1000
     }
-    set fi c:\\temp\\ConsoleCapt_[set ti].txt
+    set fi c:\\temp\\ConsoleCapt_[set b]_[set ti].txt
     if [file exists $fi] {
       set res [tk_messageBox -title "Save Console Content" \
         -icon info -type yesno \
@@ -379,7 +385,8 @@ proc ButRun {} {
   AddToPairLog $gaSet(pair) "LogTime: $gaSet(logTime)"
   AddToPairLog $gaSet(pair) " $gaSet(idBarcode) "
   
-  puts "ButRun $gaSet(idBarcode)"
+  puts "$gaSet(idBarcode)"
+  puts " $gaSet(DutFullName) "
   
   if {$ret==0} {
     Status ""

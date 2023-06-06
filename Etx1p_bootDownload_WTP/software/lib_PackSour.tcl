@@ -15,12 +15,17 @@ package require BWidget
 package require img::ico
 package require RLSound 
 package require twapi
+package require http
+package require tls
+package require base64
+::http::register https 8445 ::tls::socket
 
 source Gui_Etx1pDnld.tcl
 source Lib_Gen_Etx1pDnld.tcl
 source Lib_DialogBox.tcl
 source Main_Etx1pDnld.tcl
 # source lib_bc.tcl
+
 source [info host]/init$gaSet(pair).tcl
 source [info host]/init.tcl
 if [file exists uutInits/$gaSet(DutInitName)] {
