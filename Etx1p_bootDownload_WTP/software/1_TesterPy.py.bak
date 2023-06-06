@@ -1,7 +1,0 @@
-import tester
-from tkinter import *
-
-
-root = Tk()
-tester.Gui(root)
-root.mainloop()
