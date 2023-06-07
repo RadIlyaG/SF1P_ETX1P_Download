@@ -1,6 +1,7 @@
 from tkinter import *
 
 
+
 def checkSanityId(ent):
     entGet = ent.get()
     if (len(entGet) == 11 or len(entGet) == 12) and entGet[0:2].isalpha() and entGet[2:].isdigit():
@@ -12,7 +13,8 @@ def checkSanityId(ent):
         ent.selection_range(0, END)
         ent.focus_set()
         return False
-    
+
+
 def lastEntrySanity(event, ents, vars, win):
     #print('lastEntrySanity')
     if not checkSanityId(ents[0]):
@@ -32,7 +34,7 @@ def lastEntrySanity(event, ents, vars, win):
         ents[1].focus_set()
         return False
     
-    if ents[2].cget('state')=='disabled':
+    if ents[2].cget('state') == 'disabled':
         pass
     else:
         if ent2Get == ent3Get or not ent3Get.isalnum():

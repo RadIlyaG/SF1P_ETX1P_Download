@@ -2,7 +2,7 @@ import re
 from tkinter import *
 from formrows import makeFormRow
 from checkSanity import checkSanityId, lastEntrySanity, checkSanityTrace, sanity
-from runZinnerApps import getOI
+from runZinnerApps import *
 
 
 def packDialog(x, y):
@@ -50,6 +50,12 @@ def butCancelCmd(vars, win):
     return()
 
 
+def deleteLabels():
+    var1.set('')
+    var2.set('')
+    var3.set('')
+
+
 def jump_cursor(event, ents, this_index, vars, win):
     ent = ents[this_index]
     entGet = ent.get()
@@ -57,12 +63,13 @@ def jump_cursor(event, ents, this_index, vars, win):
     var.set(entGet.strip())
 
     if this_index == 0:
+        deleteLabels()
         if checkSanityId(ent):
             oi = getOI(entGet)
             print('jump_cursor, io: ', oi)
-            if re.search('[VC]-I/', oi) == None:
+            if re.search('WDC/', oi) is None and re.search('12V/', oi) is None:
                 ents[2].config(state=DISABLED)
-                ents[1].bind('<Return>', lambda event: lastEntrySanity(event, ents, vars, win))
+                ents[1].bind('<Return>', lambda e: lastEntrySanity(event, ents, vars, win))
         else:
             return False
     elif this_index == 1:
@@ -75,17 +82,55 @@ def jump_cursor(event, ents, this_index, vars, win):
     ents[next_index].focus_set()
 
 
-def runPackDialog():
+def runPackDialog(var1, var2, var3):
     x = root.winfo_x()
     y = root.winfo_y()
     id, traceMain, traceSub1 = packDialog(x, y)
-    print(f'id:<{id}>, traceMain:<{traceMain}>, traceSub1:<{traceSub1}>')
+
+    if id == 'Cancel':
+        pass
+    elif id != 'Cancel':
+        var1.set('')
+        var2.set('')
+        var3.set('')
+        print(f'id:<{id}>, traceMain:<{traceMain}>, traceSub1:<{traceSub1}>')
+        oi = getOI(id)
+        mkt = getMkt(id)
+        csl = getCsl(id)
+        var1.set(f'{id}, {mkt}, {csl}')
+        print('OI: ', oi, "CSL: ", csl)
+        mainPcbName = getPcbName(traceMain)
+        m = re.search('REV([.\d]+)I', mainPcbName)
+        if m:
+            mainPcbRev = m.group(1)
+        else:
+            mainPcbRev = ''
+        print('mainPcbName: ', mainPcbName, 'mainPcbRev: ', mainPcbRev)
+
+        sub1PcbName = ''
+        sub1PcbRev = ''
+        if traceSub1 != '':
+            sub1PcbName = getPcbName(traceSub1)
+            m = re.search('REV([.\d]+)I', sub1PcbName)
+            if m:
+                sub1PcbRev = m.group(1)
+            else:
+                sub1PcbRev = ''
+            print('sub1PcbName: ', sub1PcbName, 'sub1PcbRev: ', sub1PcbRev)
+
+        var2.set(f'{traceMain}, {mainPcbName}, {mainPcbRev}')
+        var3.set(f'{traceSub1}, {sub1PcbName}, {sub1PcbRev}')
 
 
 if __name__ == '__main__':
     root = Tk()
-    
-    Button(root, text="popup", command=runPackDialog).pack(fill=X)
+    var1 = StringVar()
+    var2 = StringVar()
+    var3 = StringVar()
+    Button(root, text="popup", command = lambda: runPackDialog(var1, var2, var3)).pack(fill=X)
+    Label(root, textvariable=var1).pack(fill=X)
+    Label(root, textvariable=var2).pack(anchor=W)
+    Label(root, textvariable=var3).pack(anchor=W)
     Button(root, text="bye", command=root.quit).pack(fill=X)
       
     root.mainloop()

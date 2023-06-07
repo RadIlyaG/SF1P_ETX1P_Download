@@ -23,9 +23,9 @@ class GuiMaker(Frame):
         menubar.pack(side=TOP, fill=X)
 
         for(name, key, items) in self.menuBar:
-            mbutton  = Menubutton(menubar, text=name, underline=key)
+            mbutton = Menubutton(menubar, text=name, underline=key)
             mbutton.pack(side=LEFT)
-            pulldown = Menu(mbutton)
+            pulldown = Menu(mbutton, tearoff=0)
             self.addMenuItems(pulldown, items)
             mbutton.config(menu=pulldown)
 
@@ -47,7 +47,7 @@ class GuiMaker(Frame):
                                  underline = item[1],
                                  command = item[2])
             else:
-                pullover = Menu(menu)
+                pullover = Menu(menu, tearoff=0)
                 self.addMenuItems(pullover, item[2])
                 menu.add_cascade(label = item[0],
                                  underline = item[1],
@@ -78,11 +78,11 @@ GuiMakerFrameMenu = GuiMaker
 
 class GuiMakerWindowMenu(GuiMaker):
     def makeMenuBar(self):
-        menubar = Menu(self.master)
+        menubar = Menu(self.master, tearoff=0)
         self.master.config(menu=menubar)
 
         for (name, key, items) in self.menuBar:
-            pulldown = Menu(menubar)
+            pulldown = Menu(menubar, tearoff=0)
             self.addMenuItems(pulldown, items)
             menubar.add_cascade(label = name, underline=key, menu=pulldown)
 

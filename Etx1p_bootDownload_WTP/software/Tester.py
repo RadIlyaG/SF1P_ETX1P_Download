@@ -3,7 +3,10 @@ from tkinter import *
 import guimaker
 
 menuBar = [('File', 0,
-                    [('Open', 0, lambda:0),
+                    [('Console', 0,
+                        [('Console Show', 0, lambda: 0),
+                         ('Console Hide', 0, lambda: 0),
+                         ('Capture Console', 0, lambda: 0)]),
                      ('Quit', 0, sys.exit)]),
                 ('Edit', 0, 
                     [('Cut',   0, lambda:0),
@@ -14,6 +17,8 @@ menuBar = [('File', 0,
                         ('Top12', 0, lambda:0)
                     ]),
                      ('Top2', 0, lambda:0)])]
+
+
 class Gui(guimaker.GuiMakerWindowMenu):
         def __init__(self, parent, guiNum=123):
             guimaker.GuiMakerWindowMenu.__init__(self, parent)
@@ -22,6 +27,7 @@ class Gui(guimaker.GuiMakerWindowMenu):
 
         def start(self):
             self.menuBar = menuBar
+
         def makeWidgets(self):
             frm = Frame(self, relief=GROOVE, bd=2)
             frm.pack(side=LEFT, fill=Y)
