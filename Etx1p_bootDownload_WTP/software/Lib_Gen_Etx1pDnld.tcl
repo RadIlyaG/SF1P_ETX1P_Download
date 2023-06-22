@@ -150,10 +150,10 @@ proc SaveInitGUI {} {
   global gaSet  
   set id [open [info host]/init$gaSet(pair).tcl w]
   puts $id "set gaGui(xy) +[winfo x .]+[winfo y .]"
-  puts $id "set gaSet(mainPcbId)   \"[string toupper $gaSet(mainPcbId)]\""
-  puts $id "set gaSet(sub1PcbId)   \"[string toupper $gaSet(sub1PcbId)]\""
-  puts $id "set gaSet(hwAdd)       \"[string toupper $gaSet(hwAdd)]\""
-  puts $id "set gaSet(csl)         \"[string toupper $gaSet(csl)]\""
+  #puts $id "set gaSet(mainPcbId)   \"[string toupper $gaSet(mainPcbId)]\""
+  #puts $id "set gaSet(sub1PcbId)   \"[string toupper $gaSet(sub1PcbId)]\""
+  #puts $id "set gaSet(hwAdd)       \"[string toupper $gaSet(hwAdd)]\""
+  #puts $id "set gaSet(csl)         \"[string toupper $gaSet(csl)]\""
  
   close $id   
 }
@@ -383,7 +383,9 @@ proc ReadCom {com inStr {timeout 10}} {
       set ret linux
       break
     }
-    if {$inStr=="exiting hardware virtualization" && [regexp {Kernel panic - not syncing: VFS: Unable to mount root fs on unknown-block} $buff ma]} {
+    if {$inStr=="exiting hardware virtualization" && \
+      ([regexp {Kernel panic} $buff ma] || \
+      [regexp {Kernel panic - not syncing: VFS: Unable to mount root fs on unknown-block} $buff ma] || [regexp {Kernel panic - not syncing: Aiee, killing interrupt handler!} $buff ma])} {
       set ret KernelPanic
       break
     }
@@ -785,8 +787,10 @@ proc GetDbrName {mode} {
   set ret [Linux_SW]
   puts "\nGetDbrName ret after Linux_SW:<$ret>\n"
   
-  focus -force $gaGui(curTest)
+  #focus -force $gaGui(curTest)
   if {$ret==0} {
+    focus -force $gaGui(entPCB_MAIN_IDbarc)
+    $gaGui(entPCB_MAIN_IDbarc) selection range 0 end
     Status "Ready"
   }
   return $ret
@@ -964,6 +968,41 @@ proc BuildEepromString {mode} {
   global gaSet
   puts "[MyTime] BuildEepromString $mode"
   
+   if ![info exist gaSet(hwAdd)] {
+      set gaSet(hwAdd) A
+    }
+    set gaSet(hwAdd) [string toupper $gaSet(hwAdd)]
+    
+    if ![info exist gaSet(csl)] {
+      set gaSet(csl) A
+    }
+    set gaSet(csl) [string toupper $gaSet(csl)]
+    
+    if ![info exist gaSet(mainPcbId)] {
+      set gaSet(mainPcbId) "SF-1P.REV0.4I"
+    }
+    set gaSet(mainPcbId) [string toupper $gaSet(mainPcbId)]
+    set res [regexp {REV([\d\.]+)[A-Z]} $gaSet(mainPcbId)  ma gaSet(mainHW)]
+    if {$res==0} {
+      set gaSet(fail) "Fail to retrive MAIN_CARD_HW_VERSION"
+      return -1
+    }
+    
+    if ![info exist gaSet(sub1PcbId)] {
+      set gaSet(sub1PcbId) ""
+    }
+    if {$gaSet(sub1PcbId)!=""} {
+      ## "SF-1V.PS.03"
+      set gaSet(sub1PcbId) [string toupper $gaSet(sub1PcbId)]
+      set res [regexp {PS\.?REV([\d\.]+)[A-Z]} $gaSet(sub1PcbId)  ma gaSet(sub1HW)]
+      if {$res==0} {
+        set gaSet(fail) "Fail to retrive SUB_CARD_1_HW_VERSION"
+        return -1
+      }
+    } else {
+      set gaSet(sub1HW) ""
+    }
+  
   if {$gaSet(dutFam.cell)=="0" && $gaSet(dutFam.wifi)=="0" && $gaSet(dutFam.lora)=="0"} {
     puts "##no modems, no wifi, no lora"
     set gaSet(eeprom.mod1man) ""
@@ -1029,12 +1068,17 @@ proc BuildEepromString {mode} {
   set partNum [RetriveIdTraceData $gaSet(idBarcode) MKTItem4Barcode]
   puts "BuildEepromString partNum:<$partNum>"
   
-  switch -exact -- $gaSet(dutFam.ps) {
-    ACEX {set ps 12V}
-    DC   {set ps 12V}
-    WDC  {set ps WDC-I}
-    12V  {set ps 12V-I}
-  }
+  if {$gaSet(dutFam.ps)=="ACEX"} {
+    set ps 12V
+  } elseif {$gaSet(dutFam.ps)=="DC" && $gaSet(mainHW) <= 0.5} {
+    set ps 12V
+  } elseif {$gaSet(dutFam.ps)=="DC" && $gaSet(mainHW) > 0.5} {
+    set ps DC
+  } elseif {$gaSet(dutFam.ps)=="WDC"} {
+    set ps WDC-I
+  } elseif {$gaSet(dutFam.ps)=="12V"} {
+    set ps 12V-I
+  }  
   set gaSet(eeprom.ps) $ps
   
   switch -exact -- $gaSet(dutFam.serPort) {
@@ -1063,47 +1107,7 @@ proc BuildEepromString {mode} {
     append txt MODEM_2_TYPE=${gaSet(eeprom.mod2type)},
     append txt MAC_ADDRESS=${mac},
     
-    #if ![info exist gaSet(mainHW)] {
-    #  set gaSet(mainHW) 0.4
-    #}
-    #if ![info exist gaSet(sub1HW)] {
-    #  set gaSet(sub1HW) 0.1
-    #}
-    if ![info exist gaSet(hwAdd)] {
-      set gaSet(hwAdd) A
-    }
-    set gaSet(hwAdd) [string toupper $gaSet(hwAdd)]
-    
-    if ![info exist gaSet(csl)] {
-      set gaSet(csl) A
-    }
-    set gaSet(csl) [string toupper $gaSet(csl)]
-    
-    
-    if ![info exist gaSet(mainPcbId)] {
-      set gaSet(mainPcbId) "SF-1P.REV0.4I"
-    }
-    set gaSet(mainPcbId) [string toupper $gaSet(mainPcbId)]
-    set res [regexp {REV([\d\.]+)[A-Z]} $gaSet(mainPcbId)  ma gaSet(mainHW)]
-    if {$res==0} {
-      set gaSet(fail) "Fail to retrive MAIN_CARD_HW_VERSION"
-      return -1
-    }
-    
-    if ![info exist gaSet(sub1PcbId)] {
-      set gaSet(sub1PcbId) ""
-    }
-    if {$gaSet(sub1PcbId)!=""} {
-      ## "SF-1V.PS.03"
-      set gaSet(sub1PcbId) [string toupper $gaSet(sub1PcbId)]
-      set res [regexp {PS\.?REV([\d\.]+)[A-Z]} $gaSet(sub1PcbId)  ma gaSet(sub1HW)]
-      if {$res==0} {
-        set gaSet(fail) "Fail to retrive SUB_CARD_1_HW_VERSION"
-        return -1
-      }
-    } else {
-      set gaSet(sub1HW) ""
-    }
+   
     
     
     append txt MAIN_CARD_HW_VERSION=${gaSet(mainHW)},
@@ -1307,7 +1311,7 @@ proc RetriveIdTraceData {args} {
 # GetPcbID
 # ***************************************************************************
 proc GetPcbID {board} {
-  global gaSet
+  global gaSet gaGui
   set gaSet([set board]PcbId) "" ; update
   set pcbName [RetriveIdTraceData $gaSet([set board]PcbIdBarc)   PCBTraceabilityIDData]
   puts "GetPcbID <$board> <$pcbName>" 
@@ -1315,6 +1319,40 @@ proc GetPcbID {board} {
     return -1
   } else {
     set gaSet([set board]PcbId) $pcbName
+    #set gaSet([set board]PcbIdBarc) ""
+    if {$board=="main"} {
+      focus -force $gaGui(entPCB_SUB_CARD_1_IDbarc) 
+      $gaGui(entPCB_SUB_CARD_1_IDbarc) selection range 0 end
+    }
     return 0
   }
+}
+# ***************************************************************************
+# SanityBarcodes
+# ***************************************************************************
+proc SanityBarcodes {} {
+  global gaSet
+  puts "\nSanityBarcodes ID:<$gaSet(idBarcode)> Main:<$gaSet(mainPcbIdBarc)> Sub:<$gaSet(sub1PcbIdBarc)>"
+  set ret 0
+  if {$gaSet(idBarcode) eq ""} {
+    set gaSet(curTest) $gaSet(startFrom)
+    set gaSet(fail) "Scan the UUT IdBarcode"
+    set ret -1
+  }
+  if {$ret==0 && $gaSet(mainPcbIdBarc)==""} {
+    set gaSet(fail) "Scan MainCard TraceID "
+    set ret -1
+  }
+  if {$ret==0 && $gaSet(mainPcbIdBarc) == $gaSet(sub1PcbIdBarc)} {
+    set gaSet(fail) "MainCard and Sub1Card TraceID are same"
+    set ret -1
+  }
+  if {$ret==0 && ($gaSet(dutFam.ps)=="WDC" || $gaSet(dutFam.ps)=="12V")} {
+    if {$gaSet(sub1PcbIdBarc)==""} {
+      set gaSet(fail) "Scan Sub1Card TraceID "
+      set ret -1
+    }
+  }
+  puts "SanityBarcodes ret:<$ret>"
+  return $ret
 }

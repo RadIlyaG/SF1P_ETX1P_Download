@@ -29,7 +29,7 @@ source Main_Etx1pDnld.tcl
 source [info host]/init$gaSet(pair).tcl
 source [info host]/init.tcl
 if [file exists uutInits/$gaSet(DutInitName)] {
-  source uutInits/$gaSet(DutInitName)
+  #source uutInits/$gaSet(DutInitName)
 }
 
 if [info exists gaSet(customer)] {
@@ -75,20 +75,21 @@ if ![info exists gaSet(dbrBoot)] {
 if ![info exists gaSet(dbrApp)] {
   set gaSet(dbrApp) -
 }
-if ![info exists gaSet(mainPcbId)] {
-  set gaSet(mainPcbId) "SF-1P.REV0.4I"
-}
+# if ![info exists gaSet(mainPcbId)] {
+  # set gaSet(mainPcbId) "SF-1P.REV0.4I"
+# }
 if ![info exists gaSet(sub1PcbId)] {
   set gaSet(sub1PcbId) ""
 }
 if ![info exists gaSet(hwAdd)] {
   set gaSet(hwAdd) ""
 }
-if ![info exists gaSet(csl)] {
-  set gaSet(csl) C
-}
+# if ![info exists gaSet(csl)] {
+  # set gaSet(csl) C
+# }
 
 set gaSet(idBarcode) ""
+set gaSet(DutFullName) ""
 
 # set gaSet(linux_srvr_ip.1) 172.18.94.42
 # set gaSet(linux_srvr) 1

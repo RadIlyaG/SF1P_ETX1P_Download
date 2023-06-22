@@ -4,7 +4,8 @@
 proc GUI {} {
   global gaSet gaGui glTests  
   
-  wm title . "$gaSet(pair) $gaSet(DutFullName) Boot Downloads"
+  #wm title . "$gaSet(pair) $gaSet(DutFullName) Boot Downloads"
+  wm title . "$gaSet(pair)  Boot Downloads"
   wm protocol . WM_DELETE_WINDOW {Quit}
   wm geometry . $gaGui(xy) ; #492x276
   wm resizable . 1 1
@@ -139,7 +140,7 @@ proc GUI {} {
            -variable gaSet(dnldMode) -command BuildTests]
         pack $gaGui(dnldMode) -anchor w -padx 2 -pady 2   
       pack $fr -anchor w
-      set fr [frame $frCommon.fr2 -bd 2 -relief groove]
+      set fr [frame $frCommon.fr2 -bd 0 -relief groove]
         set gaGui(chbCustSaf) [ttk::radiobutton $fr.rad1 -text "Safaricom    ($gaSet(safaricom.SWver))" -value safaricom -variable gaSet(customer) -command ChangeCust]
         set gaGui(chbCustGen) [ttk::radiobutton $fr.rad2 -text "General    ($gaSet(general.SWver))"  -value general -variable gaSet(customer) -command ChangeCust]
         # 07/02/2022 09:45:45 pack $gaGui(chbCustSaf) $gaGui(chbCustGen)  -padx 2 -pady 2 -anchor w
@@ -163,64 +164,58 @@ proc GUI {} {
         
         set gaGui(bootScript) [ttk::label $fr.lavbootScript -text "Boot Script: $gaSet(bootScript)" ]
         pack $gaGui(bootScript)  -padx 2 -pady 2 -anchor w
-        
-        
-        
+          
       pack $fr  -anchor w  -fill x
-#       set fr [frame $frCommon.fr3 -bd 2 -relief groove]
-#         set gaGui(downloadUbootAnyWay) [ttk::checkbutton $fr.chbdnldMode -text "Download Uboot"\
-#            -variable gaSet(downloadUbootAnyWay) -onvalue "Yes" -offvalue "No"]
-#         pack $gaGui(downloadUbootAnyWay) -anchor w -padx 2 -pady 2   
-#       pack $fr -anchor w -fill x
       
-    pack $frCommon -fill both -expand 1 -padx 2 -pady 2 -side left 
+    pack $frCommon -fill both -expand 0 -padx 2 -pady 2 -side left 
 	 
-    
     set frTestPerf [frame [$mainframe getframe].frTestPerf -bd 2 -relief groove]     
       set f $frTestPerf
+      
+      set frDUT  [frame $f.frDUT -bd 2 -relief groove] 
+        set labDUT [ttk::label $frDUT.labDUT -text "UUT's barcode" -width 15]
+        set gaGui(entDUT) [ttk::entry $frDUT.entDUT -justify center -width 14 -textvariable gaSet(entDUT)]
+        bind $gaGui(entDUT)  <Return> {GetDbrName full}   
+        set gaGui(entDutFullName) [ttk::entry $frDUT.entDutFullName -width 35 -justify center -textvariable gaSet(DutFullName) -state disabled] ; #  -state disabled
+        pack $labDUT $gaGui(entDUT) $gaGui(entDutFullName) -side left -padx 2
+        pack configure         $gaGui(entDutFullName) -fill x -expand yes
+        
+      
       set frUut [frame $f.frUut -bd 2 -relief groove]  
         set fu $frUut ; #[$frUut getframe]
-        set labUutOpt [ttk::label $fu.labUutOpt -text "UUT option  "]
-        set gaGui(cbUutOpt) [ttk::combobox $fu.cbUutOpt -textvariable gaSet(UutOpt) \
-            -values [list ETX1P SF1P-2UTP SF1P-4UTP SF1P-4UTP-HL] -justify center]
         
-        set labPCB_MAIN_ID [ttk::label $fu.labPCB_MAIN_ID -text "PCB_MAIN_ID"]
-        set gaGui(entPCB_MAIN_IDbarc) [ttk::entry $fu.entPCB_MAIN_IDbarc -justify center -textvariable gaSet(mainPcbIdBarc)] 
+        set entWidth 10
+        set labPCB_MAIN_ID [ttk::label $fu.labPCB_MAIN_ID -text "PCB_MAIN_ID"]  ; # SF-1P.REV0.6I
+        set gaGui(entPCB_MAIN_IDbarc) [ttk::entry $fu.entPCB_MAIN_IDbarc -width $entWidth -justify center -textvariable gaSet(mainPcbIdBarc)] 
         bind $gaGui(entPCB_MAIN_IDbarc) <Return> {GetPcbID main}   
-        set gaGui(entPCB_MAIN_ID) [ttk::entry $fu.entPCB_MAIN_ID -justify center -textvariable gaSet(mainPcbId)] ; #  -state disabled
+        set gaGui(entPCB_MAIN_ID) [ttk::entry $fu.entPCB_MAIN_ID -justify center -textvariable gaSet(mainPcbId)  -state disabled] ; #  -state disabled
         
-        set labPCB_SUB_CARD_1_ID [ttk::label $fu.labPCB_SUB_CARD_1_ID -text "PCB_SUB_CARD_1_ID"]
-        set gaGui(entPCB_SUB_CARD_1_IDbarc) [ttk::entry $fu.entPCB_SUB_CARD_1_IDbarc -justify center -textvariable gaSet(sub1PcbIdBarc)] 
+        set labPCB_SUB_CARD_1_ID [ttk::label $fu.labPCB_SUB_CARD_1_ID -text "PCB_SUB_CARD_1_ID"] ; # SF-1V/PS.REV0.3I
+        set gaGui(entPCB_SUB_CARD_1_IDbarc) [ttk::entry $fu.entPCB_SUB_CARD_1_IDbarc -width $entWidth -justify center -textvariable gaSet(sub1PcbIdBarc)] 
         bind $gaGui(entPCB_SUB_CARD_1_IDbarc) <Return> {GetPcbID sub1} 
-        set gaGui(entPCB_SUB_CARD_1_ID) [ttk::entry $fu.entPCB_SUB_CARD_1_ID -justify center -textvariable gaSet(sub1PcbId)]  ; #  -state disabled
-        
+        set gaGui(entPCB_SUB_CARD_1_ID) [ttk::entry $fu.entPCB_SUB_CARD_1_ID -justify center -textvariable gaSet(sub1PcbId)  -state disabled]  ; #  -state disabled
         
         set labHARDWARE_ADDITION [ttk::label $fu.labHARDWARE_ADDITION -text "HARDWARE_ADDITION"]
-        set gaGui(entHARDWARE_ADDITION) [ttk::entry $fu.entHARDWARE_ADDITION -justify center -textvariable gaSet(hwAdd) -state disabled]  
+        set gaGui(entHARDWARE_ADDITION) [ttk::entry $fu.entHARDWARE_ADDITION -width $entWidth -justify center -textvariable gaSet(hwAdd) -state disabled]  
 
         set labCSL [ttk::label $fu.labCSL -text "CSL"]
-        set gaGui(entCSL) [ttk::entry $fu.entCSL -justify center -textvariable gaSet(csl)]  ; #  -state disabled
+        set gaGui(entCSL) [ttk::entry $fu.entCSL -width $entWidth -justify center -textvariable gaSet(csl)  -state disabled]  ; #  -state disabled
         
-        #grid $labPCB_MAIN_ID       $gaGui(entPCB_MAIN_IDbarc) $gaGui(entPCB_MAIN_ID)        -sticky w -padx 2 -pady 2
-        #grid $labPCB_SUB_CARD_1_ID $gaGui(entPCB_SUB_CARD_1_IDbarc) $gaGui(entPCB_SUB_CARD_1_ID)  -sticky w -padx 2 -pady 2
+        grid $labPCB_MAIN_ID       $gaGui(entPCB_MAIN_IDbarc) $gaGui(entPCB_MAIN_ID)        -sticky w -padx 2 -pady 2
+        grid $labPCB_SUB_CARD_1_ID $gaGui(entPCB_SUB_CARD_1_IDbarc) $gaGui(entPCB_SUB_CARD_1_ID)  -sticky w -padx 2 -pady 2
         grid $labPCB_MAIN_ID       $gaGui(entPCB_MAIN_ID)        -sticky w -padx 2 -pady 2
         grid $labPCB_SUB_CARD_1_ID $gaGui(entPCB_SUB_CARD_1_ID)  -sticky w -padx 2 -pady 2
         grid $labHARDWARE_ADDITION $gaGui(entHARDWARE_ADDITION)  -sticky w -padx 2 -pady 2
         grid $labCSL               $gaGui(entCSL)                -sticky w -padx 2 -pady 2
         
-      set frDUT  [frame $f.frDUT -bd 2 -relief groove] 
-        set labDUT [ttk::label $frDUT.labDUT -text "UUT's barcode" -width 15]
-        set gaGui(entDUT) [ttk::entry $frDUT.entDUT -justify center -width 25 -textvariable gaSet(entDUT)]
-        bind $gaGui(entDUT)  <Return> {GetDbrName full}   
-        pack $labDUT $gaGui(entDUT) -side left -padx 2
+      
       
       set frCur [frame $f.frCur] 
         set labCur [ttk::label $frCur.labCur -text "Current Test  "]
-        set gaGui(curTest) [ttk::entry $frCur.curTest  \
-            -state readonly  -textvariable gaSet(curTest) \
-	       -justify center -width 30]
+        set gaGui(curTest) [ttk::entry $frCur.curTest -state readonly  -textvariable gaSet(curTest) \
+	       -justify center -width 45]
         pack $labCur $gaGui(curTest) -padx 7 -pady 1 -side left -fill x;# -expand 1 
-      pack $frUut $frDUT $frCur  -anchor w -pady 2 -padx 2 -fill x  -expand 1 
+      pack  $frDUT $frUut $frCur  -anchor w -pady 2 -padx 2 -fill x  -expand 1 
       #set frStatus [frame $f.frStatus]
       #  set labStatus [Label $frStatus.labStatus -text "Status  " -width 12]
       #  set gaGui(labStatus) [Entry $frStatus.entStatus \
@@ -347,7 +342,6 @@ proc ButRun {} {
   focus $gaGui(tbrun) 
   set gaSet(runStatus) ""
   set gaSet(1.barcode1.IdMacLink) ""
-  set gaSet(hwAdd) ""
   
   set gaSet(act) 1
   console eval {.console delete 1.0 end}
@@ -362,24 +356,8 @@ proc ButRun {} {
   if ![file exists c:/logs] {
     file mkdir c:/logs
   }
-  
- 
-  # set gRelayState red
-# #   IPRelay-LoopRed
-  # set ret [ReadBarcode]
-  # if {$ret=="-1"} {
-    # return $ret    
-  # }
-  # if {$ret==0} {
-    # set ret [GetDbrSW $gaSet(1.barcode1)] 
-    # puts "Ret of GetDbrSW: <$ret>"
-  # }
     
-  if {$gaSet(idBarcode) eq ""} {
-    set gaSet(curTest) $gaSet(startFrom)
-    set gaSet(fail) "Scan the UUT IdBarcode"
-    set ret -1
-  }
+  set ret [SanityBarcodes]
   
   set gaSet(log.$gaSet(pair)) c:/logs/${gaSet(logTime)}.${gaSet(idBarcode)}.txt
   AddToPairLog $gaSet(pair) "LogTime: $gaSet(logTime)"
@@ -387,7 +365,10 @@ proc ButRun {} {
   
   puts "$gaSet(idBarcode)"
   puts " $gaSet(DutFullName) "
-  
+  puts " MainCard $gaSet(mainPcbIdBarc) $gaSet(mainPcbId) "
+  puts " SubCard1 $gaSet(sub1PcbIdBarc) $gaSet(sub1PcbId) "
+
+  set gaSet(curTest) $gaSet(startFrom)
   if {$ret==0} {
     Status ""
     set gaSet(curTest) $gaSet(startFrom) ; #[$gaGui(startFrom) cget -text]
@@ -431,6 +412,7 @@ proc ButRun {} {
        catch {RLCom::Close $gaSet(comDut) }
        catch {RLEH::Close}
     }
+  
     puts "ret of Testing: $ret"  ; update
     foreach wid {startFrom } {
       $gaGui($wid) configure -state normal
@@ -488,6 +470,10 @@ proc ButRun {} {
   $gaGui(tbpaus) configure -relief sunken -state disabled
   
   set gaSet(idBarcode) ""
+  set gaSet(DutFullName) ""
+  set gaSet(hwAdd) ""
+  set gaSet(mainPcbId) ""
+  set gaSet(sub1PcbId) ""
   
   update
 }

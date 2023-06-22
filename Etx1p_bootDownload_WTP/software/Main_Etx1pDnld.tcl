@@ -10,10 +10,12 @@ proc BuildTests {} {
     lappend glTests [list Update_Uboot]
   }  
   #lappend glTests SetEnv Download_FlashImage Download_BootParamImage
-  if {$gaSet(dnldMode)==0} {
-    lappend glTests SetEnv Download_FlashImage Download_BootParamImage
-    lappend glTests [list Eeprom]
-  }
+  #if {$gaSet(dnldMode)==1} {
+  #  lappend glTests SetEnv Download_FlashImage Download_BootParamImage
+  #  lappend glTests [list Eeprom]
+  # }
+  lappend glTests SetEnv Download_FlashImage Download_BootParamImage
+  lappend glTests Eeprom
   lappend glTests RunBootNet ID
   
   set gaSet(startFrom) [lindex $glTests 0]
@@ -54,6 +56,8 @@ proc Testing {} {
   AddToPairLog $gaSet(pair) "********* DUT start *********"
   AddToPairLog $gaSet(pair) " $gaSet(idBarcode) " 
   AddToPairLog $gaSet(pair) " $gaSet(DutFullName) "
+  AddToPairLog $gaSet(pair) "MainCard $gaSet(mainPcbIdBarc) $gaSet(mainPcbId) "
+  AddToPairLog $gaSet(pair) "SubCard1 $gaSet(sub1PcbIdBarc) $gaSet(sub1PcbId) "
   puts "RunTests1 gaSet(startFrom):$gaSet(startFrom)"
 
   foreach numberedTest $lRunTests {
@@ -66,7 +70,7 @@ proc Testing {} {
     AddToPairLog $gaSet(pair) "Test \'$testName\' started"
     set ret [$testName]
     
-    catch {CaptureConsole}
+    
     
     if {$ret==0} {
       set retTxt "PASS."
@@ -86,6 +90,7 @@ proc Testing {} {
       break
     }
   }
+  catch {CaptureConsole}
   
   if {$ret==0} {
     AddToPairLog $gaSet(pair) ""
@@ -294,6 +299,11 @@ proc Update_Uboot {} {
     #puts "\n<$lines>\n" ; update    
   }
   puts "lines:<$lines>" ; update
+  # if {[string match {*WtpDownload Incomplete*} $lines]} {
+    # set gaSet(fail) "WtpDownload Incomplete"
+    # set ret -1
+    # return $ret
+  # }
   if {[string match {*Download file complete for image 1*} $lines] && \
       [string match {*Download file complete for image 2*} $lines] && \
       [string match {*Download file complete for image 3*} $lines]} {
@@ -741,9 +751,17 @@ proc RunBootNet {} {
   
   if {$ret==0} {
     Status "Boot up to \'exiting hardware virtualization\'"
-    set maxWait 1300
+    set maxWait 600
     set gaSet(fail) "RunBootNet Fail after $maxWait"
     Send $com "run bootnet\r" "PCPE>"
+    if [regexp {Kernel panic - not syncing: Aiee, killing interrupt handler!} $buffer ma] {
+      set gaSet(fail) "Can't mount FS: Kernel panic"
+      return -1
+    }
+    if [regexp {Kernel panic} $buffer ma] {
+      set gaSet(fail) "Can't mount FS: Kernel panic"
+      return -1
+    }
     set ret [ReadCom $com "exiting hardware virtualization" $maxWait]
     if {$ret!=0} {
       if {$ret=="KernelPanic"} {
@@ -786,7 +804,8 @@ proc RunBootNet {} {
     return -1
   }
   
-  if {$ret==0 && $gaSet(dnldMode)==0} {
+  if {$ret==0 && $gaSet(dnldMode)==0} {}
+  if {$ret==0} {
     set ret -1
     for {set i 1} {$i<=20} {incr i} {
       set ret [Send $com \r\r "gggg" 1]
@@ -820,7 +839,7 @@ proc RunBootNet {} {
       puts ""
       Status "Boot up to \'user>\'"
       puts "[MyTime] UserLoop $us" ; update
-      set maxWait 900
+      set maxWait 600
       set gaSet(fail) "Can't reach \'user>\' after $maxWait sec"
       set ret [ReadCom $com "user>" $maxWait]
       if {$ret==0} {break}
@@ -839,7 +858,8 @@ proc RunBootNet {} {
       }
       if {$ret=="linux" || $ret=="sys_reboot"} {}
       
-      if {$ret=="sys_reboot"} {
+      if {$ret=="sys_reboot"} {}
+      if 0 {
         if {$ret=="linux"} {
           OpenPio 
           Power all off
