@@ -583,22 +583,31 @@ proc GetDbrSW {barcode} {
   puts "GetDbrSW barcode:<$barcode> b:<$b>" ; update
   foreach pair [split $b \n] {
     foreach {aa bb} $pair {      
-      if {[string range $aa 0 1 ]=="SW" && [string index $bb 0]!= "B"} {
+      if {[string range $aa 0 1]=="SW" && [string index $bb 0]!= "B"} {
         puts "aa=$aa bb=$bb"; update
-        set sw 1
-        break
+        set sw $bb
+        #break
+      }
+      if {[string range $aa 0 1]=="SW" && [string index $bb 0] == "B"} {
+        puts "bo=$aa boo=$bb"; update
+        set boot [string range $bb 1 end]
+        #break
       }
     }
-    if {$sw} {break}
+    #if {$sw} {break}
   }
   #set gaSet(dbrSWver) $bb
+  
+  puts "GetDbrSW $barcode sw:<$sw> boot:<$boot>"
   after 1000
   
   set swTxt [glob SW*_$barcode.txt]
   catch {file delete -force $swTxt}
   
-  set gaSet(general.SWver)     "vcpeos_[set bb]_arm.tar.gz"
+  set gaSet(general.SWver)     "vcpeos_[set sw]_arm.tar.gz"
   puts "GetDbrSW barcode:<$barcode> gaSet(general.SWver):<$gaSet(general.SWver)>"
+  set gaSet(general.flashImg)  "flash-image-[set boot]_[set gaSet(dutFam.mem)]G_.bin"
+  puts "GetDbrSW barcode:<$barcode> gaSet(general.flashImg):<$gaSet(general.flashImg)>"
   
   # if ![info exists gaSet(dbrAppSwPack)] {
     # set gaSet(dbrAppSwPack) ""
@@ -757,7 +766,7 @@ proc GetDbrName {mode} {
   update
   RetriveDutFam
   
-  set gaSet(general.flashImg)  "flash-image-1.0.3_[set gaSet(dutFam.mem)]G_.bin"
+  #set gaSet(general.flashImg)  "flash-image-1.0.3_[set gaSet(dutFam.mem)]G_.bin"
   set gaSet(general.pcpes)     "pcpe-general-5.2"
   
   
@@ -1313,8 +1322,14 @@ proc RetriveIdTraceData {args} {
 proc GetPcbID {board} {
   global gaSet gaGui
   set gaSet([set board]PcbId) "" ; update
-  set pcbName [RetriveIdTraceData $gaSet([set board]PcbIdBarc)   PCBTraceabilityIDData]
-  puts "GetPcbID <$board> <$pcbName>" 
+  set barc $gaSet([set board]PcbIdBarc)
+  set pcbName -1
+  if {$barc==""} {
+    # do nothing
+  } else {
+    set pcbName [RetriveIdTraceData $barc PCBTraceabilityIDData]
+  }
+  puts "GetPcbID board:<$board> barc:<$barc> pcbName:<$pcbName>" 
   if {$pcbName=="-1"} {
     return -1
   } else {
@@ -1332,6 +1347,12 @@ proc GetPcbID {board} {
 # ***************************************************************************
 proc SanityBarcodes {} {
   global gaSet
+  if ![info exists gaSet(mainPcbIdBarc)] {
+    set gaSet(mainPcbIdBarc) ""
+  }
+  if ![info exists gaSet(sub1PcbIdBarc)] {
+    set gaSet(sub1PcbIdBarc) ""
+  }
   puts "\nSanityBarcodes ID:<$gaSet(idBarcode)> Main:<$gaSet(mainPcbIdBarc)> Sub:<$gaSet(sub1PcbIdBarc)>"
   set ret 0
   if {$gaSet(idBarcode) eq ""} {
