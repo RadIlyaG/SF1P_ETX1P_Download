@@ -616,7 +616,7 @@ proc GetDbrSW {barcode} {
   # if {$dbrAppSwPackIndx<0} {
     # set gaSet(fail) "There is no SW ID for $gaSet(dbrAppSwPack) ID:$barcode. Verify the Barcode."
     # RLSound::Play fail
-	  # Status "Test FAIL"  red
+	  # Status "Test FAIL"  #ff6464 ; # red
     # DialogBox -aspect 2000 -type Ok -message $gaSet(fail) -icon images/error -title "Get DbrSW Problem"
     # pack $gaGui(frFailStatus)  -anchor w
 	  # $gaSet(runTime) configure -text ""
@@ -630,7 +630,7 @@ proc GetDbrSW {barcode} {
   # if {$dbrBootSwPackIndx<0} {
     # set gaSet(fail) "There is no Boot SW ID for $gaSet(dbrBootSwPack) ID:$barcode. Verify the Barcode."
     # RLSound::Play fail
-	  # Status "Test FAIL"  red
+	  # Status "Test FAIL"  #ff6464 ; # red
     # DialogBox -aspect 2000 -type Ok -message $gaSet(fail) -icon images/error -title "Get DbrSW Problem"
     # pack $gaGui(frFailStatus)  -anchor w
 	  # $gaSet(runTime) configure -text ""
@@ -683,7 +683,7 @@ proc GetDbrName {mode} {
   if [string match *Exception* $b] {
     set gaSet(fail) "Network connection problem"
     RLSound::Play fail
-	  Status "Test FAIL"  red
+	  Status "Test FAIL" #ff6464 ; #  red
     DialogBox -aspect 2000 -type Ok -message $gaSet(fail) -icon images/error -title "Get DbrName Problem"
     pack $gaGui(frFailStatus)  -anchor w
 	  $gaSet(runTime) configure -text ""
@@ -695,7 +695,7 @@ proc GetDbrName {mode} {
     set gaSet(fail) "File $fileName is not created. Verify the Barcode"
     #exec C:\\RLFiles\\Tools\\Btl\\failbeep.exe &
     RLSound::Play fail
-	  Status "Test FAIL"  red
+	  Status "Test FAIL" #ff6464 ; #  red
     DialogBox -aspect 2000 -type Ok -message $gaSet(fail) -icon images/error -title "Get DbrName Problem"
     pack $gaGui(frFailStatus)  -anchor w
 	  $gaSet(runTime) configure -text ""
@@ -754,7 +754,7 @@ proc GetDbrName {mode} {
     set gaSet(fail) "$gaSet(DutInitName) is not defined"
     #exec C:\\RLFiles\\Tools\\Btl\\failbeep.exe &
     RLSound::Play fail
-	  Status "Test FAIL"  red
+	  Status "Test FAIL" #ff6464 ; #  red
     DialogBox -aspect 2000 -type Ok -message $gaSet(fail) -icon images/error -title "Get DbrName Problem"
     pack $gaGui(frFailStatus)  -anchor w
 	  $gaSet(runTime) configure -text ""
@@ -778,7 +778,7 @@ proc GetDbrName {mode} {
     puts "GetDbrName ret of GetDbrSW:$ret" ; update
     if {$ret!=0} {
       RLSound::Play fail
-  	  Status "Test FAIL"  red
+  	  Status "Test FAIL" #ff6464 ; #  red
       DialogBox -aspect 2000 -type Ok -message $gaSet(fail) -icon images/error -title "Get DbrName Problem"
       pack $gaGui(frFailStatus)  -anchor w
   	  $gaSet(runTime) configure -text ""
@@ -795,6 +795,9 @@ proc GetDbrName {mode} {
   
   set ret [Linux_SW]
   puts "\nGetDbrName ret after Linux_SW:<$ret>\n"
+  if {$ret!=0} {
+    Status $gaSet(fail) #ff6464 ; # red
+  }
   
   #focus -force $gaGui(curTest)
   if {$ret==0} {
@@ -802,6 +805,7 @@ proc GetDbrName {mode} {
     $gaGui(entPCB_MAIN_IDbarc) selection range 0 end
     Status "Ready"
   }
+  
   return $ret
 }
 

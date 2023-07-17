@@ -81,7 +81,7 @@ proc GUI {} {
   set mainframe [MainFrame .mainframe -menu $descmenu]
   
   set gaSet(sstatus) [$mainframe addindicator]  
-  $gaSet(sstatus) configure -width 36 
+  $gaSet(sstatus) configure -width 66 
   
   set gaSet(statBarShortTest) [$mainframe addindicator]
   
@@ -356,9 +356,7 @@ proc ButRun {} {
   if ![file exists c:/logs] {
     file mkdir c:/logs
   }
-    
-  set ret [SanityBarcodes]
-  
+   
   set gaSet(log.$gaSet(pair)) c:/logs/${gaSet(logTime)}.${gaSet(idBarcode)}.txt
   AddToPairLog $gaSet(pair) "LogTime: $gaSet(logTime)"
   AddToPairLog $gaSet(pair) " $gaSet(idBarcode) "
@@ -367,6 +365,8 @@ proc ButRun {} {
   puts " $gaSet(DutFullName) "
   puts " MainCard $gaSet(mainPcbIdBarc) $gaSet(mainPcbId) "
   puts " SubCard1 $gaSet(sub1PcbIdBarc) $gaSet(sub1PcbId) "
+  
+  set ret [SanityBarcodes]
 
   set gaSet(curTest) $gaSet(startFrom)
   if {$ret==0} {
@@ -427,7 +427,7 @@ proc ButRun {} {
     set gaSet(rerunTesterMulti) conf
     set gaSet(nextPair) begin    
     
-    set gRelayState red
+    set gRelayState #ff6464 ; #red
     
   }
   
@@ -455,7 +455,7 @@ proc ButRun {} {
 	  pack $gaGui(frFailStatus)  -anchor w
 	  $gaSet(runTime) configure -text ""
 	  RLSound::Play fail
-	  Status "Test FAIL"  red
+	  Status "Test FAIL" #ff6464 ; # red
 	  file rename -force $gaSet(log.$gaSet(pair)) [file rootname $gaSet(log.$gaSet(pair))]-Fail.txt   
     set log [file rootname $gaSet(log.$gaSet(pair))]-Fail.txt   
     
@@ -747,7 +747,7 @@ proc ButOkLinuxSetup {} {
     if {$ret==0} {
       Status "Linux Server is updated!" #00FF00 ; # green
     } else {
-      Status "$ret $gaSet(fail)" #FF0000 ; # red
+      Status "$ret $gaSet(fail)" #ff6464 ; # #FF0000 ; # red
     }
   }
   update
