@@ -1208,12 +1208,12 @@ proc BuildEepromString {mode} {
 # ***************************************************************************
 proc ModMan {cell} {
   switch -exact -- [string range $cell 1 end] {
-    HSP - L1 - L2 - L3 - L4 {return QUECTEL}
-    wifi                    {return AZUREWAVE}
-    lora                    {return RAK}
-    L450A                   {return Unitac}
-    L450B                   {return Unitac}
-    5G                      {return "SIERRA WIRELESS"}
+    HSP - L1 - L2 - L3 - L4 - LG {return QUECTEL}
+    wifi                         {return AZUREWAVE}
+    lora                         {return RAK}
+    L450A                        {return Unitac}
+    L450B                        {return Unitac}
+    5G                           {return "SIERRA WIRELESS"}
   }
 }  
 # ***************************************************************************
@@ -1244,6 +1244,7 @@ proc ModType {cell} {
     L450A {return ML620EU}
     L450B {return ML660PC}
     5G    {return EM9191}
+    LG    {return EC25-G}
   }
 }    
 

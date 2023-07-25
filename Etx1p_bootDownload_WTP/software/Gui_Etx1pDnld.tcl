@@ -363,6 +363,12 @@ proc ButRun {} {
   
   puts "$gaSet(idBarcode)"
   puts " $gaSet(DutFullName) "
+  if ![info exists gaSet(mainPcbIdBarc)] {
+    set gaSet(mainPcbIdBarc) ""
+  }
+  if ![info exists gaSet(sub1PcbIdBarc)] {
+    set gaSet(sub1PcbIdBarc) ""
+  }
   puts " MainCard $gaSet(mainPcbIdBarc) $gaSet(mainPcbId) "
   puts " SubCard1 $gaSet(sub1PcbIdBarc) $gaSet(sub1PcbId) "
   
