@@ -241,6 +241,8 @@ proc GUI {} {
   console eval {.console config -height 15 -width 74}
   console eval {set ::tk::console::maxLines 10000}
   console eval {.console config -font {Verdana 10}}
+  console show
+  console eval {wm iconify .}
   focus -force .
   bind . <F1> {console show}
   bind . <Alt-i> {GuiInventory}

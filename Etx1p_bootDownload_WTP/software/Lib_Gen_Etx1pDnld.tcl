@@ -351,7 +351,7 @@ proc ReadCom {com inStr {timeout 10}} {
   set secRun [expr {$secNow-$secStart}]
   while {1} {
     if {$gaSet(act)==0} {return -2}
-    if {$inStr=="exiting hardware virtualization" && $secRun > 360} {
+    if {$inStr=="exiting hardware virtualization" && $secRun > 860} {
       RLCom::Send $com "\r" buff $inStr 0.5
       set ret 0      
       set action "Send Ent to"

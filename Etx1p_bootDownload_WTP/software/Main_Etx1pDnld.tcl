@@ -751,7 +751,7 @@ proc RunBootNet {} {
   
   if {$ret==0} {
     Status "Boot up to \'exiting hardware virtualization\'"
-    set maxWait 600
+    set maxWait 900; #600
     set gaSet(fail) "RunBootNet Fail after $maxWait"
     Send $com "run bootnet\r" "PCPE>"
     if [regexp {Kernel panic - not syncing: Aiee, killing interrupt handler!} $buffer ma] {
