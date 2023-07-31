@@ -390,30 +390,34 @@ proc SetEnv {} {
     # SF1P-4UTP    {set dtb armada-3720-SF1p_superSet.dtb}
     # SF1P-4UTP-HL {set dtb armada-3720-SF1p_superSet_hl.dtb}
   # }
-  if {$gaSet(dutFam.sf)=="ETX-1P"} {
-    set dtb armada-3720-Etx1p.dtb
-  } elseif {$gaSet(dutFam.sf)=="SF-1P"} {
-    if {$gaSet(dutFam.wanPorts) == "2U"} {
-      set dtb armada-3720-SF1p.dtb
-    } else {
-      if {[string match *.HL.*  $gaSet(DutInitName)]} {
-        set dtb armada-3720-SF1p_superSet_hl.dtb
-      } elseif {[string match *.R06*  $gaSet(DutInitName)]} {
-        set dtb armada-3720-SF1p_superSet_cp2.dtb
-      } else {
-        set dtb armada-3720-SF1p_superSet.dtb
-      }
-      set mainPcbId [string toupper $gaSet(mainPcbId)]
-      set res [regexp {REV([\d\.]+)[A-Z]} $mainPcbId  ma mainHW]
-      if {$res==0} {
-        set gaSet(fail) "Fail to retrive MAIN_CARD_HW_VERSION"
-        return -1
-      }
-      if {$mainHW >= 0.6} {
-        set dtb armada-3720-SF1p_superSet_cp2.dtb
-      }
-    }
-  }
+  # if {$gaSet(dutFam.sf)=="ETX-1P"} {
+    # set dtb armada-3720-Etx1p.dtb
+  # } elseif {$gaSet(dutFam.sf)=="SF-1P" || $gaSet(dutFam.sf)=="SF-1P_ICE"} {
+    # if {$gaSet(dutFam.wanPorts) == "2U"} {
+      # set dtb armada-3720-SF1p.dtb
+    # } else {
+      # if {[string match *.HL.*  $gaSet(DutInitName)]} {
+        # set dtb armada-3720-SF1p_superSet_hl.dtb
+      # } elseif {[string match *.R06*  $gaSet(DutInitName)]} {
+        # set dtb armada-3720-SF1p_superSet_cp2.dtb
+      # } else {
+        # set dtb armada-3720-SF1p_superSet.dtb
+      # }
+      # set mainPcbId [string toupper $gaSet(mainPcbId)]
+      # set res [regexp {REV([\d\.]+)[A-Z]} $mainPcbId  ma mainHW]
+      # if {$res==0} {
+        # set gaSet(fail) "Fail to retrive MAIN_CARD_HW_VERSION"
+        # return -1
+      # }
+      # if {$mainHW >= 0.6} {
+        # set dtb armada-3720-SF1p_superSet_cp2.dtb
+      # }
+    # }
+  # }
+  
+  set dtb [DtbDefine]
+  if {$dtb=="-1"} {return $dtb}
+  
   if [info exists gaSet(log.$gaSet(pair))] {
     AddToPairLog $gaSet(pair) "Armada: $dtb"  
   }
@@ -641,30 +645,34 @@ proc SetEthEnv {} {
     # SF1P-4UTP    {set dtb armada-3720-SF1p_superSet.dtb}
     # SF1P-4UTP-HL {set dtb armada-3720-SF1p_superSet_hl.dtb}
   # }
-  if {$gaSet(dutFam.sf)=="ETX-1P"} {
-    set dtb armada-3720-Etx1p.dtb
-  } elseif {$gaSet(dutFam.sf)=="SF-1P"} {
-    if {$gaSet(dutFam.wanPorts) == "2U"} {
-      set dtb armada-3720-SF1p.dtb
-    } else {
-      if {[string match *.HL.*  $gaSet(DutInitName)]} {
-        set dtb armada-3720-SF1p_superSet_hl.dtb
-      } elseif {[string match *.R06*  $gaSet(DutInitName)]} {
-        set dtb armada-3720-SF1p_superSet_cp2.dtb
-      } else {
-        set dtb armada-3720-SF1p_superSet.dtb
-      }
-      set mainPcbId [string toupper $gaSet(mainPcbId)]
-      set res [regexp {REV([\d\.]+)[A-Z]} $mainPcbId  ma mainHW]
-      if {$res==0} {
-        set gaSet(fail) "Fail to retrive MAIN_CARD_HW_VERSION"
-        return -1
-      }
-      if {$mainHW >= 0.6} {
-        set dtb armada-3720-SF1p_superSet_cp2.dtb
-      }
-    }
-  }
+  # if {$gaSet(dutFam.sf)=="ETX-1P"} {
+    # set dtb armada-3720-Etx1p.dtb
+  # } elseif {$gaSet(dutFam.sf)=="SF-1P" || $gaSet(dutFam.sf)=="SF-1P_ICE"} {
+    # if {$gaSet(dutFam.wanPorts) == "2U"} {
+      # set dtb armada-3720-SF1p.dtb
+    # } else {
+      # if {[string match *.HL.*  $gaSet(DutInitName)]} {
+        # set dtb armada-3720-SF1p_superSet_hl.dtb
+      # } elseif {[string match *.R06*  $gaSet(DutInitName)]} {
+        # set dtb armada-3720-SF1p_superSet_cp2.dtb
+      # } else {
+        # set dtb armada-3720-SF1p_superSet.dtb
+      # }
+      # set mainPcbId [string toupper $gaSet(mainPcbId)]
+      # set res [regexp {REV([\d\.]+)[A-Z]} $mainPcbId  ma mainHW]
+      # if {$res==0} {
+        # set gaSet(fail) "Fail to retrive MAIN_CARD_HW_VERSION"
+        # return -1
+      # }
+      # if {$mainHW >= 0.6} {
+        # set dtb armada-3720-SF1p_superSet_cp2.dtb
+      # }
+    # }
+  # }
+  
+  set dtb [DtbDefine]
+  if {$dtb=="-1"} {return $dtb}
+  
   ## 28/07/2021 09:33:09 set ret [Send $com "setenv fdt_name boot/armada-3720-Etx1p.dtb\r" "PCPE>"]
   set ret [Send $com "setenv fdt_name boot/$dtb\r" "PCPE>"]
   if {$ret!=0} {return $ret}

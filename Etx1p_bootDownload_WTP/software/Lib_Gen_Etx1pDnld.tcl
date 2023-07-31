@@ -845,7 +845,7 @@ proc RetriveDutFam {{dutInitName ""}} {
   
   regexp {([A-Z0-9\-\_]+)\.E?} $dutInitName ma gaSet(dutFam.sf)
   switch -exact -- $gaSet(dutFam.sf) {
-    SF-1P  - ETX-1P {set gaSet(appPrompt) "-1p#"}
+    SF-1P - ETX-1P - SF-1P_ICE {set gaSet(appPrompt) "-1p#"}
     VB-101V {set gaSet(appPrompt) "VB101V#"}
   }
   
@@ -853,7 +853,7 @@ proc RetriveDutFam {{dutInitName ""}} {
     set gaSet(dutFam.box) "ETX-1P"
     regexp {1P\.([A-Z0-9]+)\.} $dutInitName ma gaSet(dutFam.ps)
   } else {
-    regexp {P\.(E\d)\.} $dutInitName ma gaSet(dutFam.box)  
+    regexp {P[A-Z_]*\.(E\d)\.} $dutInitName ma gaSet(dutFam.box)  
     regexp {E\d\.([A-Z0-9]+)\.} $dutInitName ma gaSet(dutFam.ps)
   }  
 
@@ -1381,4 +1381,37 @@ proc SanityBarcodes {} {
   }
   puts "SanityBarcodes ret:<$ret>"
   return $ret
+}
+# ***************************************************************************
+# DtbDefine
+# ***************************************************************************
+proc DtbDefine {} {
+  global gaSet 
+  puts "\n[MyTime] DtbDefine"
+  if {$gaSet(dutFam.sf)=="ETX-1P"} {
+    set dtb armada-3720-Etx1p.dtb
+  } elseif {$gaSet(dutFam.sf)=="SF-1P" || $gaSet(dutFam.sf)=="SF-1P_ICE"} {
+    if {$gaSet(dutFam.wanPorts) == "2U"} {
+      set dtb armada-3720-SF1p.dtb
+    } else {
+      if {[string match *.HL.*  $gaSet(DutInitName)]} {
+        set dtb armada-3720-SF1p_superSet_hl.dtb
+      } elseif {[string match *.R06*  $gaSet(DutInitName)]} {
+        set dtb armada-3720-SF1p_superSet_cp2.dtb
+      } else {
+        set dtb armada-3720-SF1p_superSet.dtb
+      }
+      set mainPcbId [string toupper $gaSet(mainPcbId)]
+      set res [regexp {REV([\d\.]+)[A-Z]} $mainPcbId  ma mainHW]
+      if {$res==0} {
+        set gaSet(fail) "Fail to retrive MAIN_CARD_HW_VERSION"
+        return -1
+      }
+      if {$mainHW >= 0.6} {
+        set dtb armada-3720-SF1p_superSet_cp2.dtb
+      }
+    }
+  }
+  puts "DtbDefine dtb:<$dtb>"
+  return $dtb
 }
