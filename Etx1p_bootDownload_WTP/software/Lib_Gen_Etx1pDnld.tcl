@@ -1080,6 +1080,10 @@ proc BuildEepromString {mode} {
   #set partNum [regsub -all {\.} $gaSet(DutFullName) /]
   set partNum [RetriveIdTraceData $gaSet(idBarcode) MKTItem4Barcode]
   puts "BuildEepromString partNum:<$partNum>"
+  if {$partNum=="-1"} {
+      set gaSet(fail) "Fail to get MKTItem4Barcode for $gaSet(idBarcode)"
+      return -1
+    }
   
   if {$gaSet(dutFam.ps)=="ACEX"} {
     set ps 12V
@@ -1303,13 +1307,13 @@ proc RetriveIdTraceData {args} {
   update
   set st [::http::status $tok]
   set nc [::http::ncode $tok]
+  upvar #0 $tok state
   if {$st=="ok" && $nc=="200"} {
     #puts "Get $command from $barc done successfully"
   } else {
-    set gaSet(fail) "http::status: <$st> http::ncode: <$nc>"; return -1
+    parray state
   }
-  upvar #0 $tok state
-  #parray state
+  
   #puts "$state(body)"
   set body $state(body)
   ::http::cleanup $tok
@@ -1318,7 +1322,11 @@ proc RetriveIdTraceData {args} {
   set tt [regsub -all $re $body " "]
   set ret [regsub -all {\s+}  $tt " "]
   
-  return [lindex $ret end]
+  if {$st=="ok" && $nc=="200"} {
+    return [lindex $ret end]
+  } else {
+    return -1
+  }  
 }
 
 # ***************************************************************************
