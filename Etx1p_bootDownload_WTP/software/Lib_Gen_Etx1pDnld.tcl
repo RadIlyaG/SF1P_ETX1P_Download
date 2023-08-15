@@ -1288,7 +1288,7 @@ proc GetMac {qty} {
 proc RetriveIdTraceData {args} {
   global gaSet
   set gaSet(fail) ""
-  puts "RetriveIdTaceData $args"
+  puts "\nRetriveIdTaceData $args"
   set barc [format %.11s [lindex $args 0]]
   
   set command [lindex $args 1]
