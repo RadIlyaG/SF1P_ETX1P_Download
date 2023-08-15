@@ -77,6 +77,8 @@ def switch_sw(srvr_ip, customer, appl, uut):
             if not re.search(appl, sw):
                 print(f'Delete unnecessary :{sw}')
                 stdin, stdout, stderr = client.exec_command(f'echo 123456 | sudo -S rm {sw}')
+                retDel = stdout.readlines()
+                print(f'retDel:{retDel}')
         
 
     stdin, stdout, stderr = client.exec_command(f'echo 123456 | sudo -S find /srv/nfs/pcpe-{customer}/root/Images/ -name {appl}')
