@@ -1288,7 +1288,7 @@ proc GetMac {qty} {
 proc RetriveIdTraceData {args} {
   global gaSet
   set gaSet(fail) ""
-  puts "\nRetriveIdTaceData $args"
+  puts "RetriveIdTaceData $args"
   set barc [format %.11s [lindex $args 0]]
   
   set command [lindex $args 1]
@@ -1307,13 +1307,13 @@ proc RetriveIdTraceData {args} {
   update
   set st [::http::status $tok]
   set nc [::http::ncode $tok]
-  upvar #0 $tok state
   if {$st=="ok" && $nc=="200"} {
     #puts "Get $command from $barc done successfully"
   } else {
-    parray state
+    puts "http::status: <$st> http::ncode: <$nc>"
   }
-  
+  upvar #0 $tok state
+  parray state
   #puts "$state(body)"
   set body $state(body)
   ::http::cleanup $tok
@@ -1422,4 +1422,22 @@ proc DtbDefine {} {
   }
   puts "DtbDefine dtb:<$dtb>"
   return $dtb
+}
+
+# ***************************************************************************
+# CreateHostValGuiId
+# ***************************************************************************
+proc CreateHostValGuiId {} {
+  global gaSet
+  puts "\n[MyTime] CreateHostValGuiId"
+  set val 0
+  if {[string match {*ilya-g*} [info host]]} {
+    set ::hostVal ilyagi
+  } else {
+    regexp {dnld-(\d)-} [info host] ma val
+    set ::hostVal $val
+  }
+  set ::GuiId $::hostVal.$gaSet(pair)
+  puts "CreateHostValGuiId hostVal:<$::hostVal> GuiId:<$::GuiId>"
+  return {}
 }

@@ -368,14 +368,16 @@ proc SetEnv {} {
   set gaSet(fail) "Set Environment Fail"
   set ret [Send $com "setenv serverip 10.10.10.1\r" "PCPE>"]
   if {$ret!=0} {return $ret}
-  set val 0
-  if {[string match {*ilya-g*} [info host]]} {
-    set ::hostVal ilyagi
-  } else {
-    regexp {dnld-(\d)-} [info host] ma val
-    set ::hostVal $val
-  }
-  set ::GuiId $::hostVal.$gaSet(pair)
+  
+  CreateHostValGuiId
+  # set val 0
+  # if {[string match {*ilya-g*} [info host]]} {
+    # set ::hostVal ilyagi
+  # } else {
+    # regexp {dnld-(\d)-} [info host] ma val
+    # set ::hostVal $val
+  # }
+  # set ::GuiId $::hostVal.$gaSet(pair)
   set ret [Send $com "setenv ipaddr 10.10.10.1${::hostVal}$gaSet(pair)\r" "PCPE>"]
   if {$ret!=0} {return $ret}
   set ret [Send $com "setenv gatewayip 10.10.10.1\r" "PCPE>"]
@@ -1382,6 +1384,8 @@ proc Eeprom {} {
   set com $gaSet(comDut)  
   set customer $gaSet(customer)
   set appl $gaSet($customer.SWver)
+  
+  CreateHostValGuiId
   
   # 10:15 28/03/2023
   # if {$gaSet(UutOpt) eq "ETX1P"} {
