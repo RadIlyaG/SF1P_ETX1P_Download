@@ -830,13 +830,11 @@ proc RunBootNet {} {
     }  
   
     if {$ret==0} {
-      set gaSet(fail) "Boot after xx Fail"
-      set ret [Send $com "x\rx\r" "WTMI" 2] 
-      if {$ret!=0} {
-        set ret [Send $com "x\rx\r" "WTMI" 2]  
-        if {$ret!=0} {
-          set ret [Send $com "x\rx\r" "WTMI" 2]  
-        }
+      set gaSet(fail) "Boot after xx Fail."
+      for {set i 1} {$i<=10} {incr 1} {
+        set ret [Send $com "x\rx\r" "WTMI" 2] 
+        if {$ret==0} {break}
+        after 2000
       } 
     }
   } elseif {$ret==0 && $gaSet(dnldMode)==1} {
