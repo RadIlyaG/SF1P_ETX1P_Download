@@ -845,19 +845,21 @@ proc RetriveDutFam {{dutInitName ""}} {
   
   regexp {([A-Z0-9\-\_]+)\.E?} $dutInitName ma gaSet(dutFam.sf)
   switch -exact -- $gaSet(dutFam.sf) {
-    SF-1P - ETX-1P - SF-1P_ICE {set gaSet(appPrompt) "-1p#"}
+    SF-1P - ETX-1P - SF-1P_ICE - ETX-1P_SFC {set gaSet(appPrompt) "-1p#"}
     VB-101V {set gaSet(appPrompt) "VB101V#"}
   }
   
-  if {$gaSet(dutFam.sf)=="ETX-1P"} {
+  if {$gaSet(dutFam.sf)=="ETX-1P" || $gaSet(dutFam.sf)=="ETX-1P_SFC"} {
     set gaSet(dutFam.box) "ETX-1P"
-    regexp {1P\.([A-Z0-9]+)\.} $dutInitName ma gaSet(dutFam.ps)
+    if ![regexp {1P\.([A-Z0-9]+)\.} $dutInitName ma gaSet(dutFam.ps)] {
+      regexp {1P_SFC\.([A-Z0-9]+)\.} $dutInitName ma gaSet(dutFam.ps)
+    }
   } else {
     regexp {P[A-Z_]*\.(E\d)\.} $dutInitName ma gaSet(dutFam.box)  
     regexp {E\d\.([A-Z0-9]+)\.} $dutInitName ma gaSet(dutFam.ps)
   }  
 
-  if {$gaSet(dutFam.sf)=="ETX-1P"} {
+  if {$gaSet(dutFam.sf)=="ETX-1P" || $gaSet(dutFam.sf)=="ETX-1P_SFC"} {
     set gaSet(dutFam.wanPorts)  "1SFP1UTP"
     set gaSet(dutFam.lanPorts)  "4UTP"
   } else {
@@ -1396,7 +1398,7 @@ proc SanityBarcodes {} {
 proc DtbDefine {} {
   global gaSet 
   puts "\n[MyTime] DtbDefine"
-  if {$gaSet(dutFam.sf)=="ETX-1P"} {
+  if {$gaSet(dutFam.sf)=="ETX-1P" || $gaSet(dutFam.sf)=="ETX-1P_SFC"} {
     set dtb armada-3720-Etx1p.dtb
   } elseif {$gaSet(dutFam.sf)=="SF-1P" || $gaSet(dutFam.sf)=="SF-1P_ICE"} {
     if {$gaSet(dutFam.wanPorts) == "2U"} {
