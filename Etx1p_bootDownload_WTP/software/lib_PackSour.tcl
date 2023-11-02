@@ -1,4 +1,4 @@
-
+wm iconify . ; update
 #console show
 package require registry
 set gaSet(hostDescription) [registry get "HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Services\\LanmanServer\\Parameters" srvcomment ]
@@ -153,4 +153,9 @@ set gaSet(DutFullName) ""
 GUI
 BuildTests
 ToggleCustometSW
+update
+update
+
+wm deiconify .
+wm geometry . $gaGui(xy)
 update
