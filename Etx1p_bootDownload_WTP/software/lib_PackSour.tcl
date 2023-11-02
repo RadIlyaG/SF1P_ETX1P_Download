@@ -4,7 +4,62 @@ package require registry
 set gaSet(hostDescription) [registry get "HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Services\\LanmanServer\\Parameters" srvcomment ]
 set jav [registry -64bit get "HKEY_LOCAL_MACHINE\\SOFTWARE\\javasoft\\Java Runtime Environment" CurrentVersion]
 set gaSet(javaLocation) [file normalize [registry -64bit get "HKEY_LOCAL_MACHINE\\SOFTWARE\\javasoft\\Java Runtime Environment\\$jav" JavaHome]/bin]
+
+if [file exists c:/TEMP_FOLDER] {
+  file delete -force c:/TEMP_FOLDER
+}
+foreach fi [glob -nocomplain -type f SW_*.txt] {
+  if [regexp {\w{2}\d{9,}} $fi] {
+    file delete -force $fi
+  }  
+}
+after 1000
 set ::RadAppsPath c:/RadApps
+
+set gaSet(radNet) 0
+foreach {jj ip} [regexp -all -inline {v4 Address[\.\s\:]+([\d\.]+)} [exec ipconfig]] {
+  if {[string match {*192.115.243.*} $ip] || [string match {*172.18.9*} $ip] || [string match {*172.17.9*} $ip]} {
+    set gaSet(radNet) 1
+  }  
+}
+
+if 1 {
+  package require RLAutoSync
+  
+  set s1 [file normalize //prod-svm1/tds/AT-Testers/JER_AT/ilya/TCL/Etx-1P_BootDownload/Etx1p_bootDownload_WTP]
+  set d1 [file normalize  C:/Etx1p_bootDownload_WTP]
+  
+  if {$gaSet(radNet)} {
+    if {[string match *ilya-g* [info host]]} {
+        set emailL [list]
+      } else {
+        set emailL {meir_ka@rad.com}
+      }  
+  } else {
+    set emailL [list]
+  }
+  
+  set ret [RLAutoSync::AutoSync "$s1 $d1" \
+      -noCheckFiles {init*.tcl *.db} \
+      -noCheckDirs {temp tmpFiles OLD old uutInits} -jarLocation  $::RadAppsPath \
+      -javaLocation $gaSet(javaLocation) -emailL $emailL -putsCmd 1 -radNet $gaSet(radNet)]
+  #console show
+  puts "ret:<$ret>"
+  set gsm $gMessage
+  foreach gmess $gMessage {
+    puts "$gmess"
+  }
+  update
+  if {$ret=="-1"} {
+    set res [tk_messageBox -icon error -type yesno -title "AutoSync"\
+    -message "The AutoSync process did not perform successfully.\n\n\
+    Do you want to continue? "]
+    if {$res=="no"} {
+      #SQliteClose
+      exit
+    }
+  }
+}
 
 package require RLEH
 package require RLTime
