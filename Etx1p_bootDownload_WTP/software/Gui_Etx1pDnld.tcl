@@ -460,6 +460,9 @@ proc ButRun {} {
       ## do not include UserStop in statistics
       set gaSet(runStatus) ""  
 	  }
+    if {$gaSet(runStatus)!=""} {
+      UnregIdBarcode
+    }
 	  pack $gaGui(frFailStatus)  -anchor w
 	  $gaSet(runTime) configure -text ""
 	  RLSound::Play fail
