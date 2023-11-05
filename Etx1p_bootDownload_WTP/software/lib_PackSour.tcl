@@ -79,7 +79,7 @@ source Gui_Etx1pDnld.tcl
 source Lib_Gen_Etx1pDnld.tcl
 source Lib_DialogBox.tcl
 source Main_Etx1pDnld.tcl
-# source lib_bc.tcl
+source lib_bc.tcl
 
 source [info host]/init$gaSet(pair).tcl
 source [info host]/init.tcl
