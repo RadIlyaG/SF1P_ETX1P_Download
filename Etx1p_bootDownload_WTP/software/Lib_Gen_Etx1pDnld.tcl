@@ -915,6 +915,8 @@ proc RetriveDutFam {{dutInitName ""}} {
   
   if {[string match *\.WF\.* $dutInitName]} {
     set gaSet(dutFam.wifi) WF
+  } elseif {[string match *\.WFH\.* $dutInitName] || [string match *\.WH\.* $dutInitName]} {
+    set gaSet(dutFam.wifi) WH
   } else {
     set gaSet(dutFam.wifi) 0
   }
@@ -1030,18 +1032,18 @@ proc BuildEepromString {mode} {
     set gaSet(eeprom.mod1type) [ModType $gaSet(dutFam.cell)]
     set gaSet(eeprom.mod2man) ""
     set gaSet(eeprom.mod2type) ""        
-  } elseif {[string index $gaSet(dutFam.cell) 0]=="1" && $gaSet(dutFam.wifi)=="WF"} {
+  } elseif {[string index $gaSet(dutFam.cell) 0]=="1" && $gaSet(dutFam.wifi)!=0} {
     puts "#### modem 1 and wifi instead of modem 2"
     set gaSet(eeprom.mod1man)  [ModMan $gaSet(dutFam.cell)]
     set gaSet(eeprom.mod1type) [ModType $gaSet(dutFam.cell)]
-    set gaSet(eeprom.mod2man)  [ModMan  -wifi]
-    set gaSet(eeprom.mod2type) [ModType -wifi]
-  } elseif {$gaSet(dutFam.cell)=="0" && $gaSet(dutFam.wifi)=="WF"} {
+    set gaSet(eeprom.mod2man)  [ModMan  $gaSet(dutFam.wifi)]
+    set gaSet(eeprom.mod2type) [ModType $gaSet(dutFam.wifi)]
+  } elseif {$gaSet(dutFam.cell)=="0" && $gaSet(dutFam.wifi)!=0} {
     puts "#### no modem 1, wifi instead of modem 2"
     set gaSet(eeprom.mod1man)  ""
     set gaSet(eeprom.mod1type) ""
-    set gaSet(eeprom.mod2man)  [ModMan  -wifi]
-    set gaSet(eeprom.mod2type) [ModType -wifi]    
+    set gaSet(eeprom.mod2man)  [ModMan  $gaSet(dutFam.wifi)]
+    set gaSet(eeprom.mod2type) [ModType $gaSet(dutFam.wifi)]    
   } elseif {[string index $gaSet(dutFam.cell) 0]=="2"} {
     puts "#### two modems are installed"
     set gaSet(eeprom.mod1man)  [ModMan $gaSet(dutFam.cell)]
@@ -1125,10 +1127,7 @@ proc BuildEepromString {mode} {
     append txt MODEM_1_TYPE=${gaSet(eeprom.mod1type)},
     append txt MODEM_2_TYPE=${gaSet(eeprom.mod2type)},
     append txt MAC_ADDRESS=${mac},
-    
    
-    
-    
     append txt MAIN_CARD_HW_VERSION=${gaSet(mainHW)},
     if {$gaSet(mainHW)>="0.6"} {
       append txt SUB_CARD_1_HW_VERSION=${gaSet(sub1HW)},
@@ -1215,11 +1214,12 @@ proc BuildEepromString {mode} {
 proc ModMan {cell} {
   switch -exact -- [string range $cell 1 end] {
     HSP - L1 - L2 - L3 - L4 - LG {return QUECTEL}
-    wifi                         {return AZUREWAVE}
+    WF                           {return AZUREWAVE}
     lora                         {return RAK}
     L450A                        {return Unitac}
     L450B                        {return Unitac}
     5G                           {return "SIERRA WIRELESS"}
+    WH                           {return GATEWORKS}
   }
 }  
 # ***************************************************************************
@@ -1233,7 +1233,7 @@ proc ModType {cell} {
     L2   {return EC25-A}
     L3   {return EC25-AU}
     L4   {return EC25-AFFD}
-    wifi {return AW-CM276MA}
+    WF   {return AW-CM276MA}
     lora {
       switch -exact -- $gaSet(dutFam.lora) {
          LR1 {return EU433}
@@ -1251,6 +1251,7 @@ proc ModType {cell} {
     L450B {return ML660PC}
     5G    {return EM9191}
     LG    {return EC25-G}
+    WH    {return GW16146}
   }
 }    
 
