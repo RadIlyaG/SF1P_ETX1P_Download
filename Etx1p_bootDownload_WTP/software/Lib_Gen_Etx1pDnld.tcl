@@ -845,7 +845,7 @@ proc RetriveDutFam {{dutInitName ""}} {
   
   regexp {([A-Z0-9\-\_]+)\.E?} $dutInitName ma gaSet(dutFam.sf)
   switch -exact -- $gaSet(dutFam.sf) {
-    SF-1P - ETX-1P - SF-1P_ICE - ETX-1P_SFC {set gaSet(appPrompt) "-1p#"}
+    SF-1P - ETX-1P - SF-1P_ICE - ETX-1P_SFC - SF-1P_ANG {set gaSet(appPrompt) "-1p#"}
     VB-101V {set gaSet(appPrompt) "VB101V#"}
   }
   
@@ -1400,7 +1400,7 @@ proc DtbDefine {} {
   puts "\n[MyTime] DtbDefine"
   if {$gaSet(dutFam.sf)=="ETX-1P" || $gaSet(dutFam.sf)=="ETX-1P_SFC"} {
     set dtb armada-3720-Etx1p.dtb
-  } elseif {$gaSet(dutFam.sf)=="SF-1P" || $gaSet(dutFam.sf)=="SF-1P_ICE"} {
+  } elseif {$gaSet(dutFam.sf)=="SF-1P" || $gaSet(dutFam.sf)=="SF-1P_ICE" || $gaSet(dutFam.sf)=="SF-1P_ANG"} {
     if {$gaSet(dutFam.wanPorts) == "2U"} {
       set dtb armada-3720-SF1p.dtb
     } else {

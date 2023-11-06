@@ -259,7 +259,7 @@ proc ReadBarcode {} {
 # ***************************************************************************
 proc UnregIdBarcode {} {
   global gaSet
-  set barcode $gaSet(1.barcode1)
+  set barcode $gaSet(idBarcode)
   Status "Unreg ID Barcode $barcode"
   set ret 0
   
