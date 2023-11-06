@@ -1,1 +1,1 @@
-set gaGui(xy) +52+322
+set gaGui(xy) +108+744
