@@ -1,7 +1,7 @@
 set gaSet(linuxIp) 172.18.94.71
 switch -exact -- $gaSet(pair) {
   1 {
-      set gaSet(comDut)  4
+      set gaSet(comDut)  9; #4
       console eval {wm geometry . +150+1}
       console eval {wm title . "Con 1"} 
       set gaSet(pioBoxSerNum) FT1MS52Y  
@@ -9,7 +9,7 @@ switch -exact -- $gaSet(pair) {
       set gaSet(pioPwr2) 4
   }
   2 {
-      set gaSet(comDut)   2
+      set gaSet(comDut)   7; #2
       console eval {wm geometry . +150+200}
       console eval {wm title . "Con 2"} 
       set gaSet(pioBoxSerNum) FT1MSOEL  
@@ -17,7 +17,7 @@ switch -exact -- $gaSet(pair) {
       set gaSet(pioPwr2) 3       
   }
   3 {
-      set gaSet(comDut)   6
+      set gaSet(comDut)   10; #6
       console eval {wm geometry . +150+200}
       console eval {wm title . "Con 3"} 
       set gaSet(pioBoxSerNum) FTS49QK 
@@ -25,7 +25,7 @@ switch -exact -- $gaSet(pair) {
       set gaSet(pioPwr2) 2
   }
   4 {
-      set gaSet(comDut)   5
+      set gaSet(comDut)   8; #5
       console eval {wm geometry . +150+200}
       console eval {wm title . "Con 4"} 
       set gaSet(pioBoxSerNum) FT31CUAV  
@@ -33,7 +33,7 @@ switch -exact -- $gaSet(pair) {
       set gaSet(pioPwr2) 1      
   }
   5 {
-      set gaSet(comDut)  9
+      set gaSet(comDut)  4; #9
       console eval {wm geometry . +150+1}
       console eval {wm title . "Con 5"} 
       set gaSet(pioBoxSerNum) FT1MS52Y  
@@ -41,7 +41,7 @@ switch -exact -- $gaSet(pair) {
       set gaSet(pioPwr2) 8
   }
   6 {
-      set gaSet(comDut)   7
+      set gaSet(comDut)   2; #7
       console eval {wm geometry . +150+200}
       console eval {wm title . "Con 6"} 
       set gaSet(pioBoxSerNum) FT1MSOEL  
@@ -49,7 +49,7 @@ switch -exact -- $gaSet(pair) {
       set gaSet(pioPwr2) 7       
   }
   7 {
-      set gaSet(comDut)   10
+      set gaSet(comDut)   6; #10
       console eval {wm geometry . +150+200}
       console eval {wm title . "Con 7"} 
       set gaSet(pioBoxSerNum) FTS49QK 
@@ -57,7 +57,7 @@ switch -exact -- $gaSet(pair) {
       set gaSet(pioPwr2) 6
   }
   8 {
-      set gaSet(comDut)    8
+      set gaSet(comDut)    5; #8
       console eval {wm geometry . +150+200}
       console eval {wm title . "Con 8"} 
       set gaSet(pioBoxSerNum) FT31CUAV  
