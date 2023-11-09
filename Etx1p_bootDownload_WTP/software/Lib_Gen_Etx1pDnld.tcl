@@ -899,7 +899,7 @@ proc RetriveDutFam {{dutInitName ""}} {
   }
   
   set gaSet(dutFam.cell) 0
-  foreach cell [list HSP L1 L2 L3 L4 L450A L450B 5G] {
+  foreach cell [list HSP L1 L2 L3 L4 L450A L450B 5G L4P] {
     set qty [llength [lsearch -all [split $dutInitName .] $cell]]
     if $qty {
       set gaSet(dutFam.cell) $qty$cell
