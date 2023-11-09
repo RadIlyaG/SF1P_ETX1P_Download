@@ -1220,6 +1220,7 @@ proc ModMan {cell} {
     L450B                        {return Unitac}
     5G                           {return "SIERRA WIRELESS"}
     WH                           {return GATEWORKS}
+    L4P                          {return Sequans}
   }
 }  
 # ***************************************************************************
@@ -1252,6 +1253,7 @@ proc ModType {cell} {
     5G    {return EM9191}
     LG    {return EC25-G}
     WH    {return GW16146}
+    L4P   {return CA410M}
   }
 }    
 
