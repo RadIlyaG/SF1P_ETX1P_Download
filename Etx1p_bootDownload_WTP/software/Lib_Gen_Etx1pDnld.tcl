@@ -581,13 +581,14 @@ proc GetDbrSW {barcode} {
   
   set sw 0
   set gaSet(manualMrktName) 0
+  set gaSet(manualCSL) 0
   catch {exec $gaSet(javaLocation)\\java -jar $::RadAppsPath/SWVersions4IDnumber.jar $barcode} b
   puts "GetDbrSW barcode:<$barcode> b:<$b>" ; update
   
   if $gaSet(demo) {
     set ret [DialogBox -width 39 -title "Manual Definitions" -text "Please define details" -type "Ok Cancel" \
-      -entQty 3  -DotEn 1 -DashEn 1 -NoNumEn 1\
-      -entLab {"SW Version, like 5.4.0.127.28" "Boot Version, like B1.0.4" "Marketing Name, like SF-1P/E1/DC/4U2S/2RS/2R"}]  
+      -entQty 4  -DotEn 1 -DashEn 1 -NoNumEn 1\
+      -entLab {"SW Version, like 5.4.0.127.28" "Boot Version, like B1.0.4" "Marketing Name, like SF-1P/E1/DC/4U2S/2RS/2R" "CSL, like A"}]  
     if {$ret=="Cancel"} {
       set gaSet(fail) "User stop"
       return -2
@@ -595,9 +596,10 @@ proc GetDbrSW {barcode} {
     set sw [string trim $gaDBox(entVal1)]
     set boot [string trim $gaDBox(entVal2)]
     if {[string index $boot 0]=="B"} {
-      set boot [string range $boot 1 end]
+      set boot [string toupper [string range $boot 1 end]]
     }
-    set gaSet(manualMrktName) [string trim $gaDBox(entVal3)]
+    set gaSet(manualMrktName) [string toupper [string trim $gaDBox(entVal3)]]
+    set gaSet(manualCSL) [string toupper [string trim $gaDBox(entVal4)]]
   } else {
     if {[lindex $b end] == $barcode} {
       set gaSet(fail) "No SW definition in IDbarcode"
@@ -818,7 +820,12 @@ proc GetDbrName {mode} {
   
   if {$ret!=0} {return $ret}
   
-  set csl [RetriveIdTraceData $barcode CSLByBarcode]
+  #set csl [RetriveIdTraceData $barcode CSLByBarcode]
+  if {$gaSet(manualCSL)=="0"} {
+    set csl [RetriveIdTraceData $barcode CSLByBarcode]
+  } else {
+    set csl $gaSet(manualCSL)
+  }
   puts "GetDbrName csl:<$csl>"
   if {$csl!="-1"} {
     set gaSet(csl) $csl
