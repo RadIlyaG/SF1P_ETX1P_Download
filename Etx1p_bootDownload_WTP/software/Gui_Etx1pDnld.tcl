@@ -5,7 +5,11 @@ proc GUI {} {
   global gaSet gaGui glTests  
   
   #wm title . "$gaSet(pair) $gaSet(DutFullName) Boot Downloads"
-  wm title . "$gaSet(pair)  Boot Downloads"
+  if $gaSet(demo) {
+    wm title . "DEMO!!! $gaSet(pair)  Boot Downloads"
+  } else {
+    wm title . "$gaSet(pair)  Boot Downloads"
+  }
   wm protocol . WM_DELETE_WINDOW {Quit}
   wm geometry . $gaGui(xy) ; #492x276
   wm resizable . 1 1
@@ -42,8 +46,7 @@ proc GUI {} {
     "&Tools" tools tools 0 {	  
       {command "Linux Setup" init {} {} -command {GuiLinuxSetup}}
       {separator}  
-      {command "Inventory" init {} {} -command {GuiInventory}}
-      {separator}  
+       
       {cascad "Power" {} pwr 0 {
         {command "PS-1 & PS-2 ON" {} "" {} -command {GuiPower $gaSet(pair) 1}} 
         {command "PS-1 & PS-2 OFF" {} "" {} -command {GuiPower $gaSet(pair) 0}}  
@@ -76,7 +79,8 @@ proc GUI {} {
       }
     }
   }
-  
+ # {command "Inventory" init {} {} -command {GuiInventory}}
+ #     {separator} 
 
   set mainframe [MainFrame .mainframe -menu $descmenu]
   

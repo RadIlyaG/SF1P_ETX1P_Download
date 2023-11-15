@@ -568,9 +568,10 @@ proc Linux_switch_pcpe {customer appl pcpe} {
 }
 # ***************************************************************************
 # GetDbrSW
+# 5.4.0.77.28 B1.0.4 SF-1P/E1/DC/4U2S/2RSM/L1/G/L1/2R
 # ***************************************************************************
 proc GetDbrSW {barcode} {
-  global gaSet gaGui
+  global gaSet gaGui gaDBox
   set gaSet(dbrApp) ""
   set gaSet(dbrBoot) ""
   if {![file exist $gaSet(javaLocation)]} {
@@ -579,24 +580,47 @@ proc GetDbrSW {barcode} {
   }
   
   set sw 0
+  set gaSet(manualMrktName) 0
   catch {exec $gaSet(javaLocation)\\java -jar $::RadAppsPath/SWVersions4IDnumber.jar $barcode} b
   puts "GetDbrSW barcode:<$barcode> b:<$b>" ; update
-  foreach pair [split $b \n] {
-    foreach {aa bb} $pair {      
-      if {[string range $aa 0 1]=="SW" && [string index $bb 0]!= "B"} {
-        puts "aa=$aa bb=$bb"; update
-        set sw $bb
-        #break
-      }
-      if {[string range $aa 0 1]=="SW" && [string index $bb 0] == "B"} {
-        puts "bo=$aa boo=$bb"; update
-        set boot [string range $bb 1 end]
-        #break
-      }
+  
+  if $gaSet(demo) {
+    set ret [DialogBox -width 39 -title "Manual Definitions" -text "Please define details" -type "Ok Cancel" \
+      -entQty 3  -DotEn 1 -DashEn 1 -NoNumEn 1\
+      -entLab {"SW Version, like 5.4.0.127.28" "Boot Version, like B1.0.4" "Marketing Name, like SF-1P/E1/DC/4U2S/2RS/2R"}]  
+    if {$ret=="Cancel"} {
+      set gaSet(fail) "User stop"
+      return -2
     }
-    #if {$sw} {break}
+    set sw [string trim $gaDBox(entVal1)]
+    set boot [string trim $gaDBox(entVal2)]
+    if {[string index $boot 0]=="B"} {
+      set boot [string range $boot 1 end]
+    }
+    set gaSet(manualMrktName) [string trim $gaDBox(entVal3)]
+  } else {
+    if {[lindex $b end] == $barcode} {
+      set gaSet(fail) "No SW definition in IDbarcode"
+      return -2
+    }
+    
+    foreach pair [split $b \n] {
+      foreach {aa bb} $pair {      
+        if {[string range $aa 0 1]=="SW" && [string index $bb 0]!= "B"} {
+          puts "aa=$aa bb=$bb"; update
+          set sw $bb
+          #break
+        }
+        if {[string range $aa 0 1]=="SW" && [string index $bb 0] == "B"} {
+          puts "bo=$aa boo=$bb"; update
+          set boot [string range $bb 1 end]
+          #break
+        }
+      }
+      #if {$sw} {break}
+    }
+    #set gaSet(dbrSWver) $bb
   }
-  #set gaSet(dbrSWver) $bb
   
   puts "GetDbrSW $barcode sw:<$sw> boot:<$boot>"
   after 1000
@@ -739,7 +763,12 @@ proc GetDbrName {mode} {
     # set gaSet(dbrBoot)       ??
     # SaveUutInit $fil
   } 
-  wm title . "$gaSet(pair) : $gaSet(DutFullName)"
+  if $gaSet(demo) {
+    wm title . "DEMO!!! $gaSet(pair) : $gaSet(DutFullName)"
+  } else {
+    wm title . "$gaSet(pair) : $gaSet(DutFullName)"
+  }
+  
   
   
   if [regexp {\.HL\.} $gaSet(DutInitName)] {
@@ -786,6 +815,8 @@ proc GetDbrName {mode} {
   } else {
     set ret 0
   }
+  
+  if {$ret!=0} {return $ret}
   
   set csl [RetriveIdTraceData $barcode CSLByBarcode]
   puts "GetDbrName csl:<$csl>"
@@ -1082,7 +1113,11 @@ proc BuildEepromString {mode} {
   #set mac 00:20:D2:AB:76:92
   
   #set partNum [regsub -all {\.} $gaSet(DutFullName) /]
-  set partNum [RetriveIdTraceData $gaSet(idBarcode) MKTItem4Barcode]
+  if {$gaSet(manualMrktName)=="0"} {
+    set partNum [RetriveIdTraceData $gaSet(idBarcode) MKTItem4Barcode]
+  } else {
+    set partNum $gaSet(manualMrktName)
+  } 
   puts "BuildEepromString partNum:<$partNum>"
   if {$partNum=="-1"} {
       set gaSet(fail) "Fail to get MKTItem4Barcode for $gaSet(idBarcode)"

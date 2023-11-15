@@ -143,6 +143,11 @@ if ![info exists gaSet(hwAdd)] {
   # set gaSet(csl) C
 # }
 
+if ![info exists gaSet(demo)] {
+  set gaSet(demo) 0
+}
+
+
 set gaSet(idBarcode) ""
 set gaSet(DutFullName) ""
 
