@@ -465,7 +465,7 @@ proc ButRun {} {
       set gaSet(runStatus) ""  
 	  }
     if {$gaSet(runStatus)!=""} {
-      UnregIdBarcode $gaSet(1.barcode1)
+      UnregIdBarcode $gaSet(idBarcode)
     }
 	  pack $gaGui(frFailStatus)  -anchor w
 	  $gaSet(runTime) configure -text ""

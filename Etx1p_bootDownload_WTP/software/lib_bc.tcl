@@ -257,7 +257,7 @@ proc ReadBarcode {} {
 
 # ***************************************************************************
 # UnregIdBarcode
-# UnregIdBarcode $gaSet(1.barcode1)
+# UnregIdBarcode $gaSet(idBarcode)
 # UnregIdBarcode EA100463652
 # ***************************************************************************
 proc UnregIdBarcode {barcode {mac {}}} {
