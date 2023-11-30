@@ -1176,9 +1176,9 @@ proc BuildEepromString {mode} {
     } else {
       append txt SUB_CARD_1_HW_VERSION=,
     }
-    if {$gaSet(mainHW)>="0.6"} {
+    if {$gaSet(mainHW)=="0.6"} {
       set gaSet(hwAdd) "C"
-      if {$gaSet(mainHW)=="0.6" && $gaSet(DutFullName)=="SF-1P/E1/DC/4U2S/2RSM/5G/2R"} {
+      if {$gaSet(DutFullName)=="SF-1P/E1/DC/4U2S/2RSM/5G/2R"} {
         set gaSet(hwAdd) "B"
       }  
       append txt HARDWARE_ADDITION=${gaSet(hwAdd)},
