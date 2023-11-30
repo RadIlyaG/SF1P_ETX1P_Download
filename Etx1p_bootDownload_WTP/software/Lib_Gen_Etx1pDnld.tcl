@@ -1178,6 +1178,9 @@ proc BuildEepromString {mode} {
     }
     if {$gaSet(mainHW)>="0.6"} {
       set gaSet(hwAdd) "C"
+      if {$gaSet(mainHW)=="0.6" && $gaSet(DutFullName)=="SF-1P/E1/DC/4U2S/2RSM/5G/2R"} {
+        set gaSet(hwAdd) "B"
+      }  
       append txt HARDWARE_ADDITION=${gaSet(hwAdd)},
     }
     append txt CSL=${gaSet(csl)},
