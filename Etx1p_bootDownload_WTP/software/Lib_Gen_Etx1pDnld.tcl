@@ -1176,13 +1176,19 @@ proc BuildEepromString {mode} {
     } else {
       append txt SUB_CARD_1_HW_VERSION=,
     }
-    if {$gaSet(mainHW)=="0.6"} {
+    
+    if {$gaSet(mainHW)<"0.6"} {
+      set gaSet(hwAdd) "" ; #"A"
+    } elseif {$gaSet(mainHW)>="0.6"} {
       set gaSet(hwAdd) "C"
-      if {$gaSet(DutFullName)=="SF-1P/E1/DC/4U2S/2RSM/5G/2R"} {
+      if {$gaSet(mainHW)=="0.6" && ($gaSet(DutFullName)=="SF-1P/E1/DC/4U2S/2RSM/5G/2R" ||\
+                                    $gaSet(DutFullName)=="SF-1P/E1/DC/4U2S/2RSM/5G/G/LRB/2R" ||\
+                                    $gaSet(DutFullName)=="SF-1P/E1/DC/4U2S/2RSM/5G/LRA/2R")} {
         set gaSet(hwAdd) "B"
       }  
-      append txt HARDWARE_ADDITION=${gaSet(hwAdd)},
     }
+    append txt HARDWARE_ADDITION=${gaSet(hwAdd)},
+    
     append txt CSL=${gaSet(csl)},
     append txt PART_NUMBER=${partNum},
     append txt PCB_MAIN_ID=${gaSet(mainPcbId)},
