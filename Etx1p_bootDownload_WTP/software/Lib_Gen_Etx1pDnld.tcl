@@ -1074,14 +1074,14 @@ proc BuildEepromString {mode} {
     puts "#### modem 1 and wifi instead of modem 2"
     set gaSet(eeprom.mod1man)  [ModMan $gaSet(dutFam.cell)]
     set gaSet(eeprom.mod1type) [ModType $gaSet(dutFam.cell)]
-    set gaSet(eeprom.mod2man)  [ModMan  $gaSet(dutFam.wifi)]
-    set gaSet(eeprom.mod2type) [ModType $gaSet(dutFam.wifi)]
+    set gaSet(eeprom.mod2man)  [ModMan  -$gaSet(dutFam.wifi)]
+    set gaSet(eeprom.mod2type) [ModType -$gaSet(dutFam.wifi)]
   } elseif {$gaSet(dutFam.cell)=="0" && $gaSet(dutFam.wifi)!=0} {
     puts "#### no modem 1, wifi instead of modem 2"
     set gaSet(eeprom.mod1man)  ""
     set gaSet(eeprom.mod1type) ""
-    set gaSet(eeprom.mod2man)  [ModMan  $gaSet(dutFam.wifi)]
-    set gaSet(eeprom.mod2type) [ModType $gaSet(dutFam.wifi)]    
+    set gaSet(eeprom.mod2man)  [ModMan  -$gaSet(dutFam.wifi)]
+    set gaSet(eeprom.mod2type) [ModType -$gaSet(dutFam.wifi)]    
   } elseif {[string index $gaSet(dutFam.cell) 0]=="2"} {
     puts "#### two modems are installed"
     set gaSet(eeprom.mod1man)  [ModMan $gaSet(dutFam.cell)]
