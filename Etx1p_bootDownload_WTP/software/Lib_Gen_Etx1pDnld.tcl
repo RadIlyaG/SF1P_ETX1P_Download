@@ -1146,7 +1146,7 @@ proc BuildEepromString {mode} {
   
   switch -exact -- $gaSet(dutFam.serPort) {
     0           {set ser1 "";       set ser2 "";      set 1rs485 "";   set 2rs485 ""; set 1cts ""   ; set 2cts ""   }
-    2RS         {set ser1 "RS232";  set ser2 "RS232"; set 1rs485 "";   set 2rs485 ""; set 1cts "YES"; set 2cts "YES"}
+    2RS  - 2RSI {set ser1 "RS232";  set ser2 "RS232"; set 1rs485 "";   set 2rs485 ""; set 1cts "YES"; set 2cts "YES"}
     2RSM - 2RMI {set ser1 "RS485";  set ser2 "RS232"; set 1rs485 "2W"; set 2rs485 ""; set 1cts "YES"; set 2cts "YES"}
     1RS         {set ser1 "RS232";  set ser2 "";      set 1rs485 "";   set 2rs485 ""; set 1cts "YES"; set 2cts ""   }
   }
