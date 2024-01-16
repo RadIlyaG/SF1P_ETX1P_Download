@@ -1272,6 +1272,7 @@ proc ModMan {cell} {
     5G                           {return "SIERRA WIRELESS"}
     WH                           {return GATEWORKS}
     L4P                          {return Sequans}
+    LTA - LTG                    {return Telit} 
   }
 }  
 # ***************************************************************************
@@ -1305,6 +1306,8 @@ proc ModType {cell} {
     LG    {return EC25-G}
     WH    {return GW16146}
     L4P   {return CA410M}
+    LTA   {return MPLS83-X}
+    LTG   {return MPLS83-W}
   }
 }    
 
