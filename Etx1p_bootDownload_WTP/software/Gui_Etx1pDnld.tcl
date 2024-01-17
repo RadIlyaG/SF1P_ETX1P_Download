@@ -15,31 +15,12 @@ proc GUI {} {
   wm resizable . 1 1
   set descmenu {
     "&File" all file 0 {	 
-      {command "Log File"  {} {} {} -command ShowLog}
-	    {separator}     
+        
       {cascad "&Console" {} console 0 {
         {checkbutton "console show" {} "Console Show" {} -command "console show" -variable gConsole}
         {command "Capture Console" cc "Capture Console" {} -command CaptureConsole}
       }
       }
-      {separator}
-      {command "Edit L1 list file" init "" {} -command {exec notepad L1.txt &}}
-      {command "Edit L2 list file" init "" {} -command {exec notepad L2.txt &}}
-      {command "Edit L3 list file" init "" {} -command {exec notepad L3.txt &}}
-      {command "Edit L4 list file" init "" {} -command {exec notepad L4.txt &}}
-      {command "Edit HSP list file" init "" {} -command {exec notepad HSP.txt &}}
-      {separator}
-      {command "Load Modem list files" init "" {} -command {LoadModemFiles}}
-      {separator}
-      {separator}
-      {command "History" History "" {} \
-         -command {
-           set cmd [list exec "C:\\Program\ Files\\Internet\ Explorer\\iexplore.exe" [pwd]\\history.html &]
-           eval $cmd
-         }
-      }
-      {separator}
-      {command "Update INIT and UserDefault files on all the Testers" {} "Exit" {} -command {UpdateInitsToTesters}}
       {separator}
       {command "E&xit" exit "Exit" {Alt x} -command {Quit}}
     }
@@ -70,17 +51,43 @@ proc GUI {} {
     }
     "&Terminal" terminal tterminal 0  {
       {command "UUT" "" "" {} -command {OpenTeraTerm gaSet(comDut)}}  
-      {command "Serial-1" "" "" {} -command {OpenTeraTerm gaSet(comSer1)}}  
-      {command "Serial-2" "" "" {} -command {OpenTeraTerm gaSet(comSer2)}} 
-      {command "485-2" "" "" {} -command {OpenTeraTerm gaSet(comSer485)}}                     
     }
-    "&About" all about 0 {
-      {command "&About" about "" {} -command {About} 
-      }
-    }
+    
   }
+  
+  
+  # {command "Log File"  {} {} {} -command ShowLog}
+	# {separator}   
+  #{separator}    
+  # {command "Edit L1 list file" init "" {} -command {exec notepad L1.txt &}}
+      # {command "Edit L2 list file" init "" {} -command {exec notepad L2.txt &}}
+      # {command "Edit L3 list file" init "" {} -command {exec notepad L3.txt &}}
+      # {command "Edit L4 list file" init "" {} -command {exec notepad L4.txt &}}
+      # {command "Edit HSP list file" init "" {} -command {exec notepad HSP.txt &}}
+      # {separator}
+      # {command "Load Modem list files" init "" {} -command {LoadModemFiles}}
+      # {separator}
+      # {separator}
+      # {command "Update INIT and UserDefault files on all the Testers" {} "Exit" {} -command {UpdateInitsToTesters}}
+      
  # {command "Inventory" init {} {} -command {GuiInventory}}
  #     {separator} 
+ # {command "History" History "" {} \
+         # -command {
+           # set cmd [list exec "C:\\Program\ Files\\Internet\ Explorer\\iexplore.exe" [pwd]\\history.html &]
+           # eval $cmd
+         # }
+      # }
+      # {separator}
+      
+      # {command "Serial-1" "" "" {} -command {OpenTeraTerm gaSet(comSer1)}}  
+      # {command "Serial-2" "" "" {} -command {OpenTeraTerm gaSet(comSer2)}} 
+      # {command "485-2" "" "" {} -command {OpenTeraTerm gaSet(comSer485)}} 
+      
+   # "&About" all about 0 {
+      # {command "&About" about "" {} -command {About} 
+      # }
+    # }
 
   set mainframe [MainFrame .mainframe -menu $descmenu]
   
