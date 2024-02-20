@@ -47,7 +47,9 @@ proc GUI {} {
       {separator}    
       {radiobutton "One test ON"  init {} {} -value 1 -variable gaSet(oneTest)}
       {radiobutton "One test OFF" init {} {} -value 0 -variable gaSet(oneTest)}
-                          
+      {separator}    
+      {radiobutton "Enable create pri log file"  init {} {} -value 1 -variable gaSet(enCrtPriLog)}
+      {radiobutton "Disable create pri log file" init {} {} -value 0 -variable gaSet(enCrtPriLog)}                    
     }
     "&Terminal" terminal tterminal 0  {
       {command "UUT" "" "" {} -command {OpenTeraTerm gaSet(comDut)}}  

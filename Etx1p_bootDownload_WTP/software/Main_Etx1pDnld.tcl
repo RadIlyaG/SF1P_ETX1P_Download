@@ -750,10 +750,23 @@ proc RunBootNet {} {
   
   puts "\n++++++++++++++++++++  printenv before run bootnet +++++++++++++++++++++++++++++++"
   #set ret [Send $com "printenv\r" "PCPE>"] 
-  set ret [Send $com "printenv NFS_DIR\r" "PCPE>"] 
-  set ret [Send $com "printenv NFS_VARIANT\r" "PCPE>"] 
-  set ret [Send $com "printenv config_nfs\r" "PCPE>"]   
+  #set ret [Send $com "printenv NFS_DIR\r" "PCPE>"] 
+  #set ret [Send $com "printenv NFS_VARIANT\r" "PCPE>"] 
+  #set ret [Send $com "printenv config_nfs\r" "PCPE>"]   
+  set ret [RLCom::Send $com "printenv\r" buffer "PCPE>"]
+  puts "$buffer"
   puts "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
+  if $gaSet(enCrtPriLog) {
+    set ti [clock format [clock seconds] -format  "%Y.%m.%d_%H.%M.%S"]
+    if ![file exists c:/temp] {
+      file mkdir c:/temp
+      after 1000
+    }
+    set fi c:\\temp\\pri_[set gaSet(idBarcode)]_[set ti].txt
+    set id [open $fi w]
+    puts $id $buffer
+    close $id
+  }
   update
   catch {exec python.exe Etx1p_linuxSwitchSW.py showGeneralRootImagesApp $gaSet(linux_srvr_ip) general ver run} res
   puts "\n[MyTime] Linux_showGeneralRootImagesApp res:<$res>"; update

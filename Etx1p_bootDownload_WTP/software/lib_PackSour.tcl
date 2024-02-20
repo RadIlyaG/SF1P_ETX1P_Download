@@ -151,6 +151,8 @@ if ![info exists gaSet(demo)] {
 set gaSet(idBarcode) ""
 set gaSet(DutFullName) ""
 
+set gaSet(enCrtPriLog) 0
+
 # set gaSet(linux_srvr_ip.1) 172.18.94.42
 # set gaSet(linux_srvr) 1
 # ToogleLinuxServerIp
