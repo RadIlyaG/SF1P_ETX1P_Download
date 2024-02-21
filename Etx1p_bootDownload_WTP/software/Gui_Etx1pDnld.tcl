@@ -49,7 +49,10 @@ proc GUI {} {
       {radiobutton "One test OFF" init {} {} -value 0 -variable gaSet(oneTest)}
       {separator}    
       {radiobutton "Enable create pri log file"  init {} {} -value 1 -variable gaSet(enCrtPriLog)}
-      {radiobutton "Disable create pri log file" init {} {} -value 0 -variable gaSet(enCrtPriLog)}                    
+      {radiobutton "Disable create pri log file" init {} {} -value 0 -variable gaSet(enCrtPriLog)}    
+      {separator}    
+      {radiobutton "Use DHCP for set_bootnetargs"  init {} {} -value 0 -variable gaSet(enStaticIp)}
+      {radiobutton "Use Static IP for set_bootnetargs" init {} {} -value 1 -variable gaSet(enStaticIp)}          
     }
     "&Terminal" terminal tterminal 0  {
       {command "UUT" "" "" {} -command {OpenTeraTerm gaSet(comDut)}}  

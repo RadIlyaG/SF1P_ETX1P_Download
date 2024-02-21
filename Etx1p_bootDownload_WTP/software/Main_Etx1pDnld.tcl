@@ -440,6 +440,11 @@ proc SetEnv {} {
   set ret [Send $com "setenv NFS_VARIANT general\r" "PCPE>"]
   set ret [Send $com "setenv config_nfs \"setenv NFS_DIR /srv/nfs/pcpe-general\"\r" "PCPE>"]
   
+  if $gaSet(enStaticIp) {
+    set ret [Send $com "setenv set_bootnetargs \"setenv bootargs console=ttyMV0,115200 earlycon=ar3700_uart,0xd0012000 \
+        root=/dev/nfs rw rootwait rootfstype=nfs ip=\$ipaddr:\$serverip:\$gatewayip:\$netmask:\$hostname:lan0:none \
+        nfsroot=\$serverip:/srv/nfs/pcpe-general,vers=2,tcp \$NFS_TYPE\"\r" "PCPE>"]
+  }
   
   set ret [Send $com "saveenv\r" "PCPE>"]
   if {$ret!=0} {return $ret}
@@ -469,6 +474,9 @@ proc Download_FlashImage {} {
   for {set i 1} {$i<=20} {incr i} {
     set ret [Send $com \r\r "PCPE>" 1]
     if {$ret==0} {break}
+    if [string match {* E *} $buffer] {
+      Send $com "x\rx\r" "PCPE>" 1
+    }
   }
   
   set gaSet(fail) "Download FlashImage Fail"
@@ -508,6 +516,9 @@ proc Download_BootParamImage {} {
   for {set i 1} {$i<=20} {incr i} {
     set ret [Send $com \r\r "PCPE>" 1]
     if {$ret==0} {break}
+    if [string match {* E *} $buffer] {
+      Send $com "x\rx\r" "PCPE>" 1
+    }
   }
   
   
