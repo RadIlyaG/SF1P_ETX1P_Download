@@ -625,6 +625,7 @@ proc GetDbrSW {barcode} {
   }
   
   puts "GetDbrSW $barcode sw:<$sw> boot:<$boot>"
+  set gaSet(dbrBootSwVer) $boot
   after 1000
   
   set swTxt [glob SW*_$barcode.txt]

@@ -1172,7 +1172,7 @@ proc Login {} {
       # }
       # return $ret
     # }
-    if {[string match {*user>*} $gaSet(loginBuffer)]} {
+    if {[string match {*user>*} $buffer]} {
       set ret [Send $com su\r "assword"]
       set ret [Send $com 1234\r "-1p#" 3]
       if {$ret=="-1"} {
@@ -1211,6 +1211,15 @@ proc Login {} {
 proc ID {} {
   global gaSet buffer
   set com $gaSet(comDut) 
+  
+  set ret [ReadBootParams]
+  if {$ret != 0} {return $ret}
+  set ret [Send $com "boot\r" "switch to partitions" ]
+  if {$ret!=0} {
+    set gaSet(fail) "No \'switch to partitions\' after \'boot\'"
+    return $ret
+  }
+  
   set ret [Login]
   if {$ret!=0} {return $ret}
   
@@ -1248,8 +1257,7 @@ proc ID {} {
     return -1
   }
   
-  set ret [ReadBootParams]
-  if {$ret != 0} {return $ret}
+  
   return $ret
 }    
 
@@ -1487,13 +1495,27 @@ proc Eeprom {} {
 # ***************************************************************************
 proc ReadBootParams {} {
   global gaSet buffer
+  puts "\n[MyTime] ReadBootParams"
   set com $gaSet(comDut)
+  #RLEH::Open
+  OpenPio 
   Power all off
   after 4000
   Power all on
+  ClosePio
+  #RLEH::Close
   
-  set ret [Login2Boot]
-  if {$ret!=0} {return $ret}
+  set gaSet(fail) "No \'PCPE\' respond"
+  for {set i 1} {$i<=20} {incr i} {
+    set ret [Send $com \r\r "PCPE>" 1]
+    if {$ret==0} {break}
+    if [string match {* E *} $buffer] {
+      Send $com "x\rx\r" "PCPE>" 1
+    }
+  }
+  
+  # set ret [Login2Boot]
+  # if {$ret!=0} {return $ret}
   
   set dbrBootSwVer $gaSet(dbrBootSwVer)
   if {[string index $dbrBootSwVer 0]=="B"} {
@@ -1503,12 +1525,26 @@ proc ReadBootParams {} {
   # set res [string match {*U-Boot 2017.03.VER1.0.2-armada-17.10.2*} $gaSet(loginBuffer)]
   set res [string match *VER$dbrBootSwVer* $gaSet(loginBuffer)]
   if {$res == 0} {
+    OpenPio 
     Power all off
     after 4000
     Power all on
+    ClosePio
+    
+    set gaSet(loginBuffer) ""
+    set gaSet(fail) "No \'PCPE\' respond"
+    for {set i 1} {$i<=20} {incr i} {
+      set ret [Send $com \r\r "PCPE>" 1]
+      append gaSet(loginBuffer) $buffer
+      if {$ret==0} {break}
+      if [string match {* E *} $buffer] {
+        Send $com "x\rx\r" "PCPE>" 1
+        append gaSet(loginBuffer) $buffer
+      }
+    }
   
-    set ret [Login2Boot]
-    if {$ret!=0} {return $ret}
+    # set ret [Login2Boot]
+    # if {$ret!=0} {return $ret}
   
     # set res [string match {*U-Boot 2017.03.VER1.0.2-armada-17.10.2*} $gaSet(loginBuffer)]
     set res [string match *VER$dbrBootSwVer* $gaSet(loginBuffer)]
@@ -1527,8 +1563,11 @@ proc ReadBootParams {} {
   
   set res [string match "*DRAM:  $gaSet(dutFam.mem) GiB*" $gaSet(loginBuffer)]
   if {$res == 0} {
-    set gaSet(fail) "No \'DRAM:  $gaSet(dutFam.mem) GiB\' in Boot"
-    return -1
+    set res [string match "*DRAM: $gaSet(dutFam.mem) GiB*" $gaSet(loginBuffer)]
+    if {$res == 0} {
+      set gaSet(fail) "No \'DRAM: $gaSet(dutFam.mem) GiB\' in Boot"
+      return -1
+    }
   }
   
   set ret [Send $com "printenv NFS_VARIANT\r" PCPE]
@@ -1549,14 +1588,13 @@ proc ReadBootParams {} {
     }
   }
   
-  
   return 0
 } 
 
 # ***************************************************************************
 # MicroSD
 # ***************************************************************************
-proc MicroSD {run} {
+proc MicroSD {} {
   set ::sendSlow 1
   global gaSet buffer
   if {[string match *.HL.*  $gaSet(DutInitName)] && $gaSet(mainHW)<"0.6"} {
@@ -1590,12 +1628,27 @@ proc PowerResetAndLogin2Boot {} {
     return 0   
   }
   
-  
+  #RLEH::Open
+  OpenPio 
   Power all off
   after 4000
-  Power all on   
+  Power all on
+  ClosePio
+  #RLEH::Close   
   
-  set ret [Login2Boot]
+  set gaSet(loginBuffer) ""
+  set gaSet(fail) "No \'PCPE\' respond"
+  for {set i 1} {$i<=20} {incr i} {
+    set ret [Send $com \r\r "PCPE>" 1]
+    append gaSet(loginBuffer) $buffer
+    if {$ret==0} {break}
+    if [string match {* E *} $buffer] {
+      Send $com "x\rx\r" "PCPE>" 1
+      append gaSet(loginBuffer) $buffer
+    }
+  }
+  
+  # set ret [Login2Boot]
   return $ret 
 }
 # ***************************************************************************
@@ -1696,7 +1749,7 @@ proc MicroSDPerform {} {
 # ***************************************************************************
 # SOC_Flash_Memory
 # ***************************************************************************
-proc SOC_Flash_Memory {run} {
+proc SOC_Flash_Memory {} {
   global gaSet buffer
   set ::sendSlow 1
   set com $gaSet(comDut)
@@ -1770,7 +1823,7 @@ proc SocFlashMemPerform {} {
 # ***************************************************************************
 # SOC_i2C
 # ***************************************************************************
-proc SOC_i2C {run} {
+proc SOC_i2C {} {
   global gaSet buffer
   set ::sendSlow 1
   set com $gaSet(comDut)
@@ -1863,7 +1916,7 @@ proc SocI2cPerform {} {
 # ***************************************************************************
 # BootLeds
 # ***************************************************************************
-proc FrontPanelLeds {run} {
+proc FrontPanelLeds {} {
   set ::sendSlow 0
   set ret [BootLedsPerf]
 }
@@ -1874,93 +1927,41 @@ proc BootLedsPerf {} {
   global gaSet buffer
   set com $gaSet(comDut)
   
-  if {$gaSet(dutFam.sf)=="ETX-1P_SFC"} {
-    Power all off
-    Status "Power OFF"
-    after 4000
-    Power all on
-    Status "Power ON"
-    after 1000
-  }
+  # if {$gaSet(dutFam.sf)=="ETX-1P_SFC"} {
+    # Power all off
+    # Status "Power OFF"
+    # after 4000
+    # Power all on
+    # Status "Power ON"
+    # after 1000
+  # }
   
-  RLSound::Play information
-  set txt "Please disconnect all ETH cables\n\
-  Remove the SD-card and the SIMs (if exists)"
-  if {$gaSet(dutFam.cell)!=0} {
-    append txt "\nDisconnect the antenna from \'LTE MAIN\' and mount it on the \'LTE AUX\'"
-  }  
-  set res [DialogBox -title "Boot Leds Test" -type "Ok Cancel" -message $txt  -icon images/info]
-  if {$res=="Cancel"} {
-    set gaSet(fail) "\'LTE AUX\' Test fail" 
-    return -1
+  set ret [PowerResetAndLogin2Boot]
+  if {$ret!=0} {return $ret}
+    for {set try 1} {$try <= 3} {incr try} {
+    RLSound::Play information
+    set txt "Remove the SD-card"
+    set res [DialogBox -title "Boot Leds Test" -type "Ok Cancel" -message $txt  -icon images/info]
+    if {$res=="Cancel"} {
+      set gaSet(fail) "\'LTE AUX\' Test fail" 
+      return -1
+    }
+    
+    set ret [Send $com "mmc dev 0:1\r" "PCPE"]
+    if {$ret!=0} {
+      set gaSet(fail) "\'mmc dev 0:1\' fail"
+      return -1
+    }
+ 
+    if ![string match {*ot found*} $buffer] {   
+      set gaSet(fail) "SD card is not pulled out"
+      set ret -1
+    } else {
+      set ret 0
+      break
+    }
   }
-  
-  Send $com "exit\r\r" "stam" 3 
-  Send $com "\33" "stam" 1  
-  set ret [Login]  ; # Login2App
-  if {$ret!=0} {
-    return $ret
-  }
-  RLSound::Play information
-  RLCom::Read $com buffer
-  Send $com "\r" "stam" 1 
-  set ::bb $buffer
-  puts "Buffer before FD: <$::bb>"; update 
-  set res [DialogBox -title "FD button Test" -type "Yes No" \
-      -message "Press the FD button for 10-15 sec and verify the UUT is reboting (Front side's LEDs are blinking one time).\n\n\
-      Reset has been performed??" -icon images/info]
-  if {$res=="No"} {
-    set gaSet(fail) "FD button Test fail" 
-    return -1
-  }
-  
-  Send $com "\r" "stam" 1 
-  set ::ba $buffer
-  puts "Buffer after FD: <$::ba>"; update 
-  
-  RLCom::Read $com buffer
-  puts "BootLedsPerf buffer <$buffer>" ; update
-  if {[string match {*actory-default-config*} $buffer]==0} {
-    set gaSet(fail) "No \'factory-default-config\' message (FD button)" 
-    #return -1
-  }
-  if {$::bb == $::ba} {
-    set gaSet(fail) "Reset was not performed (FD button)" 
-    return -1
-  }
-   
-  set ret [Login2Boot]
-  if {$ret!=0} {return $ret}  
-  
-#   RLSound::Play information
-#   set res [DialogBox -title "FD button Test" -type "Yes No" \
-#       -message "Press the FD button and verify the UUT is reboting.\n\n\
-#       Reset has been performed??" -icon images/info]
-#   if {$res=="No"} {
-#     set gaSet(fail) "FD button Test fail" 
-#     return -1
-#   }
-#   set ret [Login2Boot]
-#   if {$ret!=0} {return $ret}  
-  
-  set ret [Send $com "\r\r" "PCPE" 1]
-  if {$ret!=0} {
-    Power all off
-    after 4000
-    Power all on
-    set ret [Login2Boot]
-    if {$ret!=0} {return $ret}    
-  }
-  
-  set ret [Send $com "mmc dev 0:1\r" "PCPE"]
-  if {$ret!=0} {
-    set gaSet(fail) "\'mmc dev 0:1\' fail"
-    return -1
-  }
-  if ![string match {*ot found*} $buffer] {   
-    set gaSet(fail) "SD card is not pulled out" 
-    return -1
-  }
+  if {$ret!=0} {return $ret}
   
   RLSound::Play information
   set res [DialogBox -title "ALM and RUN Led Test" -type "Yes No" \
