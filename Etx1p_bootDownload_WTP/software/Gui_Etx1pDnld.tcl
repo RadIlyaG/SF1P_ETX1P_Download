@@ -502,6 +502,22 @@ proc ButRun {} {
   set gaSet(mainPcbId) ""
   set gaSet(sub1PcbId) ""
   
+  if {$ret==0 || $ret==1} {
+    set txt "\nSet J18 to 2-3, J19 to 1-2, J20 to 1-2, J21 to 2-3"
+    set bg yellow
+    set fg blue
+    set fnt {TkDefaultFont 11}
+  } else {
+    set txt ""
+    set bg SystemButtonFace
+    set fg SystemWindowText
+    set fnt {TkDefaultFont 9}
+  }
+  set res [DialogBox -type "OK" -icon /images/info -title "Finish" -message "The test is done $txt" \
+    -bg $bg -font $fnt -fg $fg]
+  update
+  Ramzor all off
+  
   update
 }
 

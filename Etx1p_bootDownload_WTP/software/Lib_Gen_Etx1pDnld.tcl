@@ -908,6 +908,7 @@ proc RetriveDutFam {{dutInitName ""}} {
     } elseif {[string match *\.5U1S\.* $dutInitName]} {
       set gaSet(dutFam.wanPorts)  "5U1S"
     }
+    set gaSet(dutFam.lanPorts)  "NotExists"
   }
   
   if {[string match *\.2RS\.* $dutInitName]} {
@@ -918,9 +919,12 @@ proc RetriveDutFam {{dutInitName ""}} {
     set gaSet(dutFam.serPort) 1RS
 	} elseif {[string match *\.2RMI\.* $dutInitName]} {
     set gaSet(dutFam.serPort) 2RMI
-	} else {
+	} elseif {[string match *\.2RSI\.* $dutInitName]} {
+    set gaSet(dutFam.serPort) 2RSI
+  } else {
     set gaSet(dutFam.serPort) 0
   }
+  
   if {[string match *\.CSP\.* $dutInitName]} {
     set gaSet(dutFam.serPortCsp) CSP
   } else {
@@ -966,9 +970,9 @@ proc RetriveDutFam {{dutInitName ""}} {
   }
   
   if {[string match *\.RG\.* $dutInitName]} {
-    #set gaSet(dutFam.rg) rg
+    set gaSet(dutFam.rg) RG
   } else {
-    #set gaSet(dutFam.rg) 0
+    set gaSet(dutFam.rg) 0
   }
   
   set qty [regexp -all {\.(LR[1-6A-Z])\.} $dutInitName ma lora]
