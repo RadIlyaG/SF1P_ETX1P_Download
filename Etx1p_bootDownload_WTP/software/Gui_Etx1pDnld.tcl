@@ -418,23 +418,23 @@ proc ButRun {} {
     #GuiPower all 1 ; ## power ON before OpenRL
     set gaSet(plEn) 0
     if {$ret==0} {
-       catch {RLCom::Close $gaSet(comDut) }
-       catch {RLEH::Close}
+      catch {RLCom::Close $gaSet(comDut) }
+      catch {RLEH::Close}
        
-       RLEH::Open
-       OpenPio 
-       Power all off
-       after 4000
-       Power all on
-       ClosePio
+      RLEH::Open
+      OpenPio 
+      Power all off
+      after 4000
+      Power all on
+      ClosePio
       
-       set ret [RLCom::Open $gaSet(comDut) 115200 8 NONE 1]
-       if {$ret==0} { 
-         set gaSet(runStatus) ""
-         set ret [Testing]
-       }
-       catch {RLCom::Close $gaSet(comDut) }
-       catch {RLEH::Close}
+      set ret [RLCom::Open $gaSet(comDut) 115200 8 NONE 1]
+      if {$ret==0} { 
+        set gaSet(runStatus) ""
+        set ret [Testing]
+      }
+      catch {RLCom::Close $gaSet(comDut) }
+      catch {RLEH::Close}
     }
   
     puts "ret of Testing: $ret"  ; update

@@ -1212,13 +1212,14 @@ proc ID {} {
   global gaSet buffer
   set com $gaSet(comDut) 
   
-  set ret [ReadBootParams]
-  if {$ret != 0} {return $ret}
-  set ret [Send $com "boot\r" "switch to partitions" ]
-  if {$ret!=0} {
-    set gaSet(fail) "No \'switch to partitions\' after \'boot\'"
-    return $ret
-  }
+  # Perform ReadBootParams at the end of ID
+  # set ret [ReadBootParams]
+  # if {$ret != 0} {return $ret}
+  # set ret [Send $com "boot\r" "switch to partitions" ]
+  # if {$ret!=0} {
+    # set gaSet(fail) "No \'switch to partitions\' after \'boot\'"
+    # return $ret
+  # }
   
   set ret [Login]
   if {$ret!=0} {return $ret}
@@ -1257,6 +1258,8 @@ proc ID {} {
     return -1
   }
   
+  set ret [ReadBootParams]
+  if {$ret != 0} {return $ret}
   
   return $ret
 }    
@@ -1505,12 +1508,15 @@ proc ReadBootParams {} {
   ClosePio
   #RLEH::Close
   
+  set gaSet(loginBuffer) ""
   set gaSet(fail) "No \'PCPE\' respond"
   for {set i 1} {$i<=20} {incr i} {
     set ret [Send $com \r\r "PCPE>" 1]
+    append gaSet(loginBuffer) $buffer
     if {$ret==0} {break}
     if [string match {* E *} $buffer] {
       Send $com "x\rx\r" "PCPE>" 1
+      append gaSet(loginBuffer) $buffer
     }
   }
   
@@ -1938,46 +1944,57 @@ proc BootLedsPerf {} {
   
   set ret [PowerResetAndLogin2Boot]
   if {$ret!=0} {return $ret}
+  
+  if {$gaSet(dutFam.box)=="ETX-1P"} {
+    set ret 0
+    ## no SD in ETX
+  } else {
     for {set try 1} {$try <= 3} {incr try} {
-    RLSound::Play information
-    set txt "Remove the SD-card"
-    set res [DialogBox -title "Boot Leds Test" -type "Ok Cancel" -message $txt  -icon images/info]
-    if {$res=="Cancel"} {
-      set gaSet(fail) "\'LTE AUX\' Test fail" 
-      return -1
-    }
-    
-    set ret [Send $com "mmc dev 0:1\r" "PCPE"]
-    if {$ret!=0} {
-      set gaSet(fail) "\'mmc dev 0:1\' fail"
-      return -1
-    }
- 
-    if ![string match {*ot found*} $buffer] {   
-      set gaSet(fail) "SD card is not pulled out"
-      set ret -1
-    } else {
-      set ret 0
-      break
+      RLSound::Play information
+      set txt "Remove the SD-card"
+      set res [DialogBox -title "Boot Leds Test" -type "Ok Cancel" -message $txt  -icon images/info]
+      if {$res=="Cancel"} {
+        set gaSet(fail) "\'LTE AUX\' Test fail" 
+        return -1
+      }
+      
+      set ret [Send $com "mmc dev 0:1\r" "PCPE"]
+      if {$ret!=0} {
+        set gaSet(fail) "\'mmc dev 0:1\' fail"
+        return -1
+      }
+   
+      if ![string match {*ot found*} $buffer] {   
+        set gaSet(fail) "SD card is not pulled out"
+        set ret -1
+      } else {
+        set ret 0
+        break
+      }
     }
   }
   if {$ret!=0} {return $ret}
   
+  if {$gaSet(dutFam.box)=="ETX-1P"} {
+    set runTxt ""
+  } else {
+    runTxt "and RUN "
+  }
   RLSound::Play information
-  set res [DialogBox -title "ALM and RUN Led Test" -type "Yes No" \
-      -message "Verify the ALM and RUN Leds are OFF" -icon images/info]
+  set res [DialogBox -title "ALM $runTxt Led Test" -type "Yes No" \
+      -message "Verify the ALM $runTxt Leds are OFF" -icon images/info]
   if {$res=="No"} {
-    set gaSet(fail) "ALM and RUN Leds are not OFF" 
+    set gaSet(fail) "ALM $runTxt Leds are not OFF" 
     return -1
   }
   
   set ret [Send $com "gpio toogle GPIO112\r" "PCPE"]
   if {$ret!=0} {return $ret}
   RLSound::Play information
-  set res [DialogBox -title "RUN and PWR Green Led Test" -type "Yes No" \
-      -message "Verify the RUN and PWR Green Leds are ON" -icon images/info]
+  set res [DialogBox -title "PWR $runTxt Green Led Test" -type "Yes No" \
+      -message "Verify the PWR $runTxt Green Leds are ON" -icon images/info]
   if {$res=="No"} {
-    set gaSet(fail) "RUN and/or PWR Green Led are not ON" 
+    set gaSet(fail) "PWR $runTxt Green Led are not ON" 
     return -1
   }
   Send $com "gpio toogle GPIO112\r" "PCPE"
