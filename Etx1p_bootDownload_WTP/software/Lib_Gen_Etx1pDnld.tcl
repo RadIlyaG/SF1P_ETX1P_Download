@@ -1415,6 +1415,13 @@ proc GetPcbID {board} {
     if {$board=="main"} {
       focus -force $gaGui(entPCB_SUB_CARD_1_IDbarc) 
       $gaGui(entPCB_SUB_CARD_1_IDbarc) selection range 0 end
+      set res [regexp {REV([\d\.]+)[A-Z]} $gaSet(mainPcbId)  ma gaSet(mainHW)]
+      if {$res==1} {
+          set ret 0
+        } else {
+          set gaSet(fail) "Fail to retrive mainHW from mainPcbId"
+          return -1
+        } 
     }
     return 0
   }

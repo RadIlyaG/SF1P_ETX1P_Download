@@ -390,7 +390,21 @@ proc ButRun {} {
   puts " MainCard $gaSet(mainPcbIdBarc) $gaSet(mainPcbId) "
   puts " SubCard1 $gaSet(sub1PcbIdBarc) $gaSet(sub1PcbId) "
   
+  RLSound::Play information
+      
+  set txt "Connect ETH and Control cables, insert SD card. \n\nSet J18 to 2-3, J19 to 1-2, J20 to 1-2, J21 to 1-2"
+  set res [DialogBox -icon images/info -type "Continue Abort" -text $txt -default 0 -aspect 2000 -title "SF-1p"]
+  if {$res=="Abort"} {
+    set ret -2
+    set gaSet(fail) "User stop"
+    AddToPairLog $gaSet(pair) $gaSet(fail)
+  } else {
+    set ret 0
+  }
+  
+  if {$ret==0} {
   set ret [SanityBarcodes]
+  }
 
   set gaSet(curTest) $gaSet(startFrom)
   if {$ret==0} {
@@ -503,7 +517,7 @@ proc ButRun {} {
   set gaSet(sub1PcbId) ""
   
   if {$ret==0 || $ret==1} {
-    set txt "\nSet J18 to 2-3, J19 to 1-2, J20 to 1-2, J21 to 2-3"
+    set txt "\nSet J18 to 1-2, J19 to 2-3, J20 to 2-3, J21 to 2-3"
     set bg yellow
     set fg blue
     set fnt {TkDefaultFont 11}
