@@ -1977,14 +1977,16 @@ proc BootLedsPerf {} {
   
   if {$gaSet(dutFam.box)=="ETX-1P"} {
     set runTxt ""
+    set verb "is"
   } else {
     runTxt "and RUN "
+    set verb "are"
   }
   RLSound::Play information
   set res [DialogBox -title "ALM $runTxt Led Test" -type "Yes No" \
-      -message "Verify the ALM $runTxt Leds are OFF" -icon images/info]
+      -message "Verify the ALM $runTxt Led/s $verb OFF" -icon images/info]
   if {$res=="No"} {
-    set gaSet(fail) "ALM $runTxt Leds are not OFF" 
+    set gaSet(fail) "ALM $runTxt Led/s $verb not OFF" 
     return -1
   }
   
@@ -1992,9 +1994,9 @@ proc BootLedsPerf {} {
   if {$ret!=0} {return $ret}
   RLSound::Play information
   set res [DialogBox -title "PWR $runTxt Green Led Test" -type "Yes No" \
-      -message "Verify the PWR $runTxt Green Leds are ON" -icon images/info]
+      -message "Verify the PWR $runTxt Green Led/s $verb ON" -icon images/info]
   if {$res=="No"} {
-    set gaSet(fail) "PWR $runTxt Green Led are not ON" 
+    set gaSet(fail) "PWR $runTxt Green Led/s $$verb not ON" 
     return -1
   }
   Send $com "gpio toogle GPIO112\r" "PCPE"
