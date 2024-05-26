@@ -401,7 +401,7 @@ proc ButRun {} {
   } else {
     set ret 0
   }
-  
+
   if {$ret==0} {
   set ret [SanityBarcodes]
   }
@@ -504,7 +504,7 @@ proc ButRun {} {
     update
   }
   if {$gaSet(runStatus)!=""} {
-    #SQliteAddLine
+    SQliteAddLine
   }
   $gaGui(tbrun) configure -relief raised -state normal
   $gaGui(tbstop) configure -relief sunken -state disabled
