@@ -76,8 +76,8 @@ proc SQliteAddLine {} {
     set operator 0
   }
   
-  if [info exists gaSet(sub1PcbIdBarc)] {
-    set traceID $gaSet(sub1PcbIdBarc)
+  if [info exists gaSet(mainPcbIdBarc)] {
+    set traceID $gaSet(mainPcbIdBarc)
   } else {
     set traceID 0
   }

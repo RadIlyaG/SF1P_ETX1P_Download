@@ -379,27 +379,31 @@ proc ButRun {} {
   AddToPairLog $gaSet(pair) "LogTime: $gaSet(logTime)"
   AddToPairLog $gaSet(pair) " $gaSet(idBarcode) "
   
-  puts "$gaSet(idBarcode)"
-  puts " $gaSet(DutFullName) "
-  if ![info exists gaSet(mainPcbIdBarc)] {
-    set gaSet(mainPcbIdBarc) ""
-  }
-  if ![info exists gaSet(sub1PcbIdBarc)] {
-    set gaSet(sub1PcbIdBarc) ""
-  }
-  puts " MainCard $gaSet(mainPcbIdBarc) $gaSet(mainPcbId) "
-  puts " SubCard1 $gaSet(sub1PcbIdBarc) $gaSet(sub1PcbId) "
+  set ret [GuiReadOperator]
   
-  RLSound::Play information
-      
-  set txt "Connect ETH and Control cables, insert SD card. \n\nSet J18 to 2-3, J19 to 1-2, J20 to 1-2, J21 to 1-2"
-  set res [DialogBox -icon images/info -type "Continue Abort" -text $txt -default 0 -aspect 2000 -title "SF-1p"]
-  if {$res=="Abort"} {
-    set ret -2
-    set gaSet(fail) "User stop"
-    AddToPairLog $gaSet(pair) $gaSet(fail)
-  } else {
-    set ret 0
+  if {$ret==0} {
+    puts "$gaSet(idBarcode)"
+    puts " $gaSet(DutFullName) "
+    if ![info exists gaSet(mainPcbIdBarc)] {
+      set gaSet(mainPcbIdBarc) ""
+    }
+    if ![info exists gaSet(sub1PcbIdBarc)] {
+      set gaSet(sub1PcbIdBarc) ""
+    }
+    puts " MainCard $gaSet(mainPcbIdBarc) $gaSet(mainPcbId) "
+    puts " SubCard1 $gaSet(sub1PcbIdBarc) $gaSet(sub1PcbId) "
+    
+    RLSound::Play information
+        
+    set txt "Connect ETH and Control cables, insert SD card. \n\nSet J18 to 2-3, J19 to 1-2, J20 to 1-2, J21 to 1-2"
+    set res [DialogBox -icon images/info -type "Continue Abort" -text $txt -default 0 -aspect 2000 -title "SF-1p"]
+    if {$res=="Abort"} {
+      set ret -2
+      set gaSet(fail) "User stop"
+      AddToPairLog $gaSet(pair) $gaSet(fail)
+    } else {
+      set ret 0
+    }
   }
 
   if {$ret==0} {
@@ -977,5 +981,29 @@ proc ButOkInventory {} {
   ToggleCustometSW
   ButCancInventory
 }
+
+# ***************************************************************************
+# GuiReadOperator
+# ***************************************************************************
+proc GuiReadOperator {} {
+  global gaSet gaGui gaDBox gaGetOpDBox
+  catch {array unset gaDBox} 
+  catch {array unset gaGetOpDBox} 
+  if $::NoATP {
+    puts "[MyTime] NoAtp-Operator"
+    return 0
+  }
+  #set ret [GetOperator -i pause.gif -ti "title Get Operator" -te "text Operator's Name "]
+  set sn [clock seconds]
+  set ret [GetOperator -i images/oper32.ico -gn $::RadAppsPath]
+  incr ::wastedSecs [expr {[clock seconds]-$sn}]
+  if {$ret=="-1"} {
+    set gaSet(fail) "No Operator Name"
+    return $ret
+  } else {
+    set gaSet(operator) $ret
+    return 0
+  }
+}   
 
 

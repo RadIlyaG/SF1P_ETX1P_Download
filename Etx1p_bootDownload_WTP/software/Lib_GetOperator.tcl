@@ -152,7 +152,7 @@ proc FillDB {fi qty} {
 # GetOperRad
 # ***************************************************************************
 proc GetOperRad {gn empId} {
-  #puts "GetOperRad $gn $empId" ; update
+  puts "GetOperRad $gn $empId" ; update
   if {![file exists $gn/GetEmpName.exe]} {
     tk_messageBox -type ok -icon error -message "GetEmpName.exe doesn't exist"
     return -1  
