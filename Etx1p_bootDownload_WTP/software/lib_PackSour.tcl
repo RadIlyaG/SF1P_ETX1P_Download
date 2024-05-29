@@ -40,7 +40,7 @@ if 1 {
   }
   
   set ret [RLAutoSync::AutoSync "$s1 $d1" \
-      -noCheckFiles {init*.tcl *.db log*.txt} \
+      -noCheckFiles {init*.tcl log*.txt} \
       -noCheckDirs {temp tmpFiles OLD old uutInits} -jarLocation  $::RadAppsPath \
       -javaLocation $gaSet(javaLocation) -emailL $emailL -putsCmd 1 -radNet $gaSet(radNet)]
   #console show
