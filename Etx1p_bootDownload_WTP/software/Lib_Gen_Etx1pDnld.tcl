@@ -1,6 +1,6 @@
-#***************************************************************************
+# ***************************************************************************
 # RetriveUsbChannel
-#***************************************************************************
+# ***************************************************************************
 proc RetriveUsbChannel {} {
   global gaSet
   if {$gaSet(pioType)=="Ex"} {
@@ -1146,6 +1146,10 @@ proc BuildEepromString {mode} {
     set ps WDC-I
   } elseif {$gaSet(dutFam.ps)=="12V"} {
     set ps 12V-I
+  } elseif {$gaSet(dutFam.ps)=="D72V"} {
+    set ps D72V-I
+  } elseif {$gaSet(dutFam.ps)=="FDC"} {
+    set ps FDC-I
   }  
   set gaSet(eeprom.ps) $ps
   
