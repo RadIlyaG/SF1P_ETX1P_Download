@@ -894,8 +894,8 @@ proc RetriveDutFam {{dutInitName ""}} {
       regexp {1P_SFC\.([A-Z0-9]+)\.} $dutInitName ma gaSet(dutFam.ps)
     }
   } else {
-    regexp {P[A-Z_]*\.(E\d)\.} $dutInitName ma gaSet(dutFam.box)  
-    regexp {E\d\.([A-Z0-9]+)\.} $dutInitName ma gaSet(dutFam.ps)
+    regexp {P[A-Z_]*\.(E[R\d]?)\.} $dutInitName ma gaSet(dutFam.box)  
+    regexp {E[R\d]?\.([A-Z0-9]+)\.} $dutInitName ma gaSet(dutFam.ps)
   }  
 
   if {$gaSet(dutFam.sf)=="ETX-1P" || $gaSet(dutFam.sf)=="ETX-1P_SFC"} {
@@ -1150,6 +1150,8 @@ proc BuildEepromString {mode} {
     set ps D72V-I
   } elseif {$gaSet(dutFam.ps)=="FDC"} {
     set ps FDC-I
+  } elseif {$gaSet(dutFam.ps)=="RDC"} {
+    set ps RDC-I
   }  
   set gaSet(eeprom.ps) $ps
   
