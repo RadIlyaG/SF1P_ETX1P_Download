@@ -1,0 +1,14 @@
+checkmac.jar
+SWVersions4IDnumber.jar
+
+MACReg_2Mac_2IMEI.exe
+MACServer.exe
+
+AutoSyncApp.jar
+
+Yoav B.Shabat's:
+GetEmpName.exe
+
+Yakob S.'s:
+atedecryptor.exe
+

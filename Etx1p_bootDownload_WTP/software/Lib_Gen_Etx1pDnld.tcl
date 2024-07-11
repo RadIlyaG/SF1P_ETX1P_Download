@@ -184,6 +184,7 @@ proc SaveInit {} {
   puts $id "set gaSet(actGen) \"$gaSet(actGen)\""
   
   puts $id "set gaSet(linux_srvr_ip) \"$gaSet(linux_srvr_ip)\""
+  puts $id "set gaSet(secBoot) \"$gaSet(secBoot)\""
   
   close $id   
 }

@@ -154,6 +154,9 @@ if ![info exists gaSet(hwAdd)] {
 if ![info exists gaSet(demo)] {
   set gaSet(demo) 0
 }
+if ![info exists gaSet(secBoot)] {
+  set gaSet(secBoot) 0
+}
 
 
 set gaSet(idBarcode) ""

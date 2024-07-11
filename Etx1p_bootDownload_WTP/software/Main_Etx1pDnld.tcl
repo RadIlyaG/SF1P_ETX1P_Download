@@ -6,7 +6,10 @@ proc BuildTests {} {
   
   #set glTests [list DownloadBoot]
   set glTests [list] ; #Linux_SW
-  if {$gaSet(dnldMode)==0} {
+  # if {$gaSet(dnldMode)==0} {
+    # lappend glTests [list Update_Uboot]
+  # }  
+  if {$gaSet(secBoot)==0} {
     lappend glTests [list Update_Uboot]
   }  
   #lappend glTests SetEnv Download_FlashImage Download_BootParamImage
@@ -14,7 +17,11 @@ proc BuildTests {} {
   #  lappend glTests SetEnv Download_FlashImage Download_BootParamImage
   #  lappend glTests [list Eeprom]
   # }
-  lappend glTests SetEnv Download_FlashImage Download_BootParamImage
+  
+  lappend glTests SetEnv
+  if {$gaSet(secBoot)==0} {
+    lappend glTests Download_FlashImage Download_BootParamImage
+  }
   lappend glTests Eeprom
   lappend glTests RunBootNet ID
   if {$gaSet(UutOpt)=="ETX1P"} {
@@ -849,10 +856,17 @@ proc RunBootNet {} {
   if {$ret==0} {
     set ret -1
     for {set i 1} {$i<=20} {incr i} {
-      set ret [Send $com \r\r "gggg" 1]
+      set ret [Send $com \r\r "$i gggg" 1]
       set buffer [join $buffer ""]
-      if {[string match *E>* $buffer]} {
+      if !$gaSet(secBoot) {
+        if {[string match *E>* $buffer]} {
+          set ret 0
+          break
+        }
+      }
+      if {[string match *PCPE>* $buffer]} {
         set ret 0
+        Send $com boot\r "stam" 10
         break
       }
     }
@@ -861,12 +875,18 @@ proc RunBootNet {} {
     }  
   
     if {$ret==0} {
-      set gaSet(fail) "Boot after xx Fail."
-      for {set i 1} {$i<=10} {incr 1} {
-        set ret [Send $com "x\rx\r" "WTMI" 2] 
-        if {$ret==0} {break}
-        after 2000
-      } 
+      if !$gaSet(secBoot) {
+        set gaSet(fail) "Boot after xx Fail."
+        for {set i 1} {$i<=10} {incr 1} {
+          set ret [Send $com "x\rx\r" "WTMI" 2] 
+          if {$ret==0} {break}
+          if {[string match *PCPE>* $buffer]} {
+            set ret 0
+            break
+          }
+          after 2000
+        } 
+      }
     }
   } elseif {$ret==0 && $gaSet(dnldMode)==1} {
     ## do nothing

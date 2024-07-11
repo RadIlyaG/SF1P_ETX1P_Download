@@ -153,8 +153,11 @@ proc GUI {} {
     set frCommon [frame [$mainframe getframe].frCommon -bd 2 -relief groove]
       set fr [frame $frCommon.fr1 -bd 0 -relief groove]
         set gaGui(dnldMode) [ttk::checkbutton $fr.chbdnldMode -text "Update SW only"\
-           -variable gaSet(dnldMode) -command BuildTests]
-        pack $gaGui(dnldMode) -anchor w -padx 2 -pady 2   
+           -variable gaSet(dnldMode) -command BuildTests -state disabled]
+        set gaGui(secBoot) [ttk::checkbutton $fr.chbsecBoot -text "Secure Boot"\
+           -variable gaSet(secBoot) -command BuildTests]
+        pack $gaGui(dnldMode) -anchor w -padx 2 -pady 2 
+        pack $gaGui(secBoot) -anchor w -padx 2 -pady 2         
       pack $fr -anchor w
       set fr [frame $frCommon.fr2 -bd 0 -relief groove]
         set gaGui(chbCustSaf) [ttk::radiobutton $fr.rad1 -text "Safaricom    ($gaSet(safaricom.SWver))" -value safaricom -variable gaSet(customer) -command ChangeCust]
@@ -322,7 +325,7 @@ proc Quit {} {
 #***************************************************************************
 proc CaptureConsole {} {
  console eval { 
-    set b [.console get 1.0 1.15]
+    set b [.console get 4.0 4.15]
     set ti [clock format [clock seconds] -format  "%Y.%m.%d_%H.%M.%S"]
     if ![file exists c:/temp] {
       file mkdir c:/temp
@@ -395,7 +398,11 @@ proc ButRun {} {
     
     RLSound::Play information
         
-    set txt "Connect ETH and Control cables, insert SD card. \n\nSet J18 to 2-3, J19 to 1-2, J20 to 1-2, J21 to 1-2"
+    if $gaSet(secBoot) {
+      set txt "Connect ETH and Control cables, insert SD card. \n\nSet J18 to 1-2, J19 to 2-3, J20 to 2-3, J21 to 1-2"
+    } else {
+      set txt "Connect ETH and Control cables, insert SD card. \n\nSet J18 to 2-3, J19 to 1-2, J20 to 1-2, J21 to 1-2"
+    }
     set res [DialogBox -icon images/info -type "Continue Abort" -text $txt -default 0 -aspect 2000 -title "SF-1p"]
     if {$res=="Abort"} {
       set ret -2
