@@ -1285,6 +1285,7 @@ proc ModMan {cell} {
     WH                           {return GATEWORKS}
     L4P                          {return Sequans}
     LTA - LTG                    {return Telit} 
+    LR9                          {return Ushine} 
   }
 }  
 # ***************************************************************************
@@ -1310,6 +1311,7 @@ proc ModType {cell} {
          LRA {return 9XX}
          LRB {return 8XX}
          LRC {return LRC}
+         LR9 {return UP100}
       }  
     }
     L450A {return ML620EU}
