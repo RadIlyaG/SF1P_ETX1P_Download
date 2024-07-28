@@ -1521,3 +1521,27 @@ proc CreateHostValGuiId {} {
   puts "CreateHostValGuiId hostVal:<$::hostVal> GuiId:<$::GuiId>"
   return {}
 }
+
+# ***************************************************************************
+# GetAllPasses
+# ***************************************************************************
+proc GetAllPasses {{fromDate "2024-04-01"}} {
+  set l_passes [list]
+  set secs [clock scan $fromDate]
+  foreach pass [glob c:/logs/*Pass.txt] {
+    if {[file mtime $pass]>$secs} {
+        lappend l_passes $pass
+      }
+    
+  }
+  if [catch {open c:/temp/all_passes_from_[set fromDate].txt w+} id] {
+    return $l_passes
+  } else {
+    foreach pass $l_passes {
+      ##[file tail $pass]
+      puts $id "[lindex [split [file tail $pass] -] 0] [lindex [split [lindex [split $pass -] 1] .] end]"
+    }
+    close $id
+    return "[llength $l_passes] files. See c:/temp/all_passes_from_[set fromDate].txt" 
+  }  
+}
