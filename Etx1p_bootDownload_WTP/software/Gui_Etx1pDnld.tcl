@@ -25,7 +25,7 @@ proc GUI {} {
       {command "E&xit" exit "Exit" {Alt x} -command {Quit}}
     }
     "&Tools" tools tools 0 {	  
-      {command "Linux Setup" init {} {} -command {GuiLinuxSetup}}
+      {command "Linux Setup" init {} {} -command {GuiLinuxSetup} -state disabled}
       {separator}  
        
       {cascad "Power" {} pwr 0 {
@@ -170,10 +170,10 @@ proc GUI {} {
         #pack $gaGui(labApp)  -padx 2 -pady 2 -anchor w
         
         set gaGui(actGen) [ttk::label $fr.labActPack -text "Active Package: $gaSet(actGen)" ]
-        pack $gaGui(actGen)  -padx 2 -pady 2 -anchor w
+        # 15:26 30/07/2024 pack $gaGui(actGen)  -padx 2 -pady 2 -anchor w
         
         set gaGui(pcpeGen) [ttk::label $fr.labGen -text "Packages: $gaSet(general.pcpes)" ]
-        pack $gaGui(pcpeGen)  -padx 2 -pady 2 -anchor w
+        # 15:26 30/07/2024 pack $gaGui(pcpeGen)  -padx 2 -pady 2 -anchor w
         
         set gaGui(chbCustGen) [ttk::label $fr.rad22 -text "SW Ver.: $gaSet(safaricom.SWver)"]
         pack $gaGui(chbCustGen)  -padx 2 -pady 2 -anchor w
@@ -182,7 +182,7 @@ proc GUI {} {
         pack $gaGui(flashImg)  -padx 2 -pady 2 -anchor w
         
         set gaGui(bootScript) [ttk::label $fr.lavbootScript -text "Boot Script: $gaSet(bootScript)" ]
-        pack $gaGui(bootScript)  -padx 2 -pady 2 -anchor w
+        # 15:26 30/07/2024 pack $gaGui(bootScript)  -padx 2 -pady 2 -anchor w
           
       pack $fr  -anchor w  -fill x
       
@@ -584,6 +584,10 @@ proc ButPause {} {
 # GuiLinuxSetup
 # ***************************************************************************
 proc GuiLinuxSetup {} {
+
+  ## 14:41 30/07/2024
+  return 0
+  
   global gaSet gaTmpSet gaGui
   array unset gaTmpSet
   Status ""
