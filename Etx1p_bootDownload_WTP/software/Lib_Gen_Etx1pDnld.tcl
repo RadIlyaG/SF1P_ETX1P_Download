@@ -577,14 +577,14 @@ proc GetDbrSW {barcode} {
   set gaSet(dbrBoot) ""
   if {![file exist $gaSet(javaLocation)]} {
     set gaSet(fail) "Java application is missing"
-    return -1
+    return -2 ; # 10:16 26/08/2024 -1
   }
   
   set sw 0
   set gaSet(manualMrktName) 0
   set gaSet(manualCSL) 0
-  catch {exec $gaSet(javaLocation)\\java -jar $::RadAppsPath/SWVersions4IDnumber.jar $barcode} b
-  puts "GetDbrSW barcode:<$barcode> b:<$b>" ; update
+  #10:15 26/08/2024 catch {exec $gaSet(javaLocation)\\java -jar $::RadAppsPath/SWVersions4IDnumber.jar $barcode} b 
+  #puts "GetDbrSW barcode:<$barcode> b:<$b>" ; update
   
   if $gaSet(demo) {
     set ret [DialogBox -width 39 -title "Manual Definitions" -text "Please define details" -type "Ok Cancel" \
@@ -602,13 +602,19 @@ proc GetDbrSW {barcode} {
     set gaSet(manualMrktName) [string toupper [string trim $gaDBox(entVal3)]]
     set gaSet(manualCSL) [string toupper [string trim $gaDBox(entVal4)]]
   } else {
-    if {[lindex $b end] == $barcode} {
-      set gaSet(fail) "No SW definition in IDbarcode"
+    foreach {res resTxt} [::RLWS::Get_SwVersions $barcode] {} 
+    puts "GetDbrSW barcode:<$barcode> resTxt:<$resTxt>" ; update
+    # if {[lindex $b end] == $barcode} {
+      # set gaSet(fail) "No SW definition in IDbarcode"
+      # return -2
+    # }
+    if {$res!=0} {
+      set gaSet(fail) $resTxt
       return -2
     }
     
-    foreach pair [split $b \n] {
-      foreach {aa bb} $pair {      
+    #foreach pair [split $b \n] {}
+      foreach {aa bb} $resTxt {      
         if {[string range $aa 0 1]=="SW" && [string index $bb 0]!= "B"} {
           puts "aa=$aa bb=$bb"; update
           set sw $bb
@@ -621,7 +627,7 @@ proc GetDbrSW {barcode} {
         }
       }
       #if {$sw} {break}
-    }
+    #{}
     #set gaSet(dbrSWver) $bb
   }
   
@@ -629,8 +635,8 @@ proc GetDbrSW {barcode} {
   set gaSet(dbrBootSwVer) $boot
   after 1000
   
-  set swTxt [glob SW*_$barcode.txt]
-  catch {file delete -force $swTxt}
+  #set swTxt [glob SW*_$barcode.txt]
+  #catch {file delete -force $swTxt}
   
   set gaSet(general.SWver)     "vcpeos_[set sw]_arm.tar.gz"
   puts "GetDbrSW barcode:<$barcode> gaSet(general.SWver):<$gaSet(general.SWver)>"
@@ -822,9 +828,15 @@ proc GetDbrName {mode} {
   
   if {$ret!=0} {return $ret}
   
-  #set csl [RetriveIdTraceData $barcode CSLByBarcode]
   if {$gaSet(manualCSL)=="0"} {
-    set csl [RetriveIdTraceData $barcode CSLByBarcode]
+    # 08:57 26/08/2024set csl [RetriveIdTraceData $barcode CSLByBarcode]
+    foreach {res resTxt} [::RLWS::Get_CSL $barcode] {}
+    if {$res!=0} {
+      set gaSet(fail) $resTxt
+      return $res
+    } else {
+      set csl $resTxt
+    }
   } else {
     set csl $gaSet(manualCSL)
   }
@@ -943,7 +955,7 @@ proc RetriveDutFam {{dutInitName ""}} {
   }
   
   set gaSet(dutFam.cell) 0
-  foreach cell [list HSP L1 L2 L3 L4 L450A L450B 5G L4P LG] {
+  foreach cell [list HSP L1 L2 L3 L4 L450A L450B 5G L4P LG LTA] {
     set qty [llength [lsearch -all [split $dutInitName .] $cell]]
     if $qty {
       set gaSet(dutFam.cell) $qty$cell
@@ -977,7 +989,7 @@ proc RetriveDutFam {{dutInitName ""}} {
     set gaSet(dutFam.rg) 0
   }
   
-  set qty [regexp -all {\.(LR[1-6A-Z])\.} $dutInitName ma lora]
+  set qty [regexp -all {\.(LR[1-69A-Z])\.} $dutInitName ma lora]
   if $qty {
     set gaSet(dutFam.lora) $lora
     switch -exact -- $lora {
@@ -989,6 +1001,7 @@ proc RetriveDutFam {{dutInitName ""}} {
       LRA {set gaSet(dutFam.lora.region) us915; set gaSet(dutFam.lora.fam) 9XX; set gaSet(dutFam.lora.band) "US 902-928 Sub-band 2"}
       LRB {set gaSet(dutFam.lora.region) eu868; set gaSet(dutFam.lora.fam) 8XX; set gaSet(dutFam.lora.band) "EU 863-870"}
       LRC {set gaSet(dutFam.lora.region) eu433; set gaSet(dutFam.lora.fam) 4XX; set gaSet(dutFam.lora.band) "EU 433"}
+      LR9 {set gaSet(dutFam.lora.region) us915; set gaSet(dutFam.lora.fam) 9XX; set gaSet(dutFam.lora.band) "US 915-928 Sub-band 2"}
     }
   } else {
     set gaSet(dutFam.lora) 0
@@ -1107,6 +1120,18 @@ proc BuildEepromString {mode} {
     set gaSet(eeprom.mod2man)  ""
     set gaSet(eeprom.mod2type) ""
   }
+  parray gaSet eeprom.mod*
+  if [string match *LR9*LTA* $gaSet(DutFullName)] {
+    set mod1manT  $gaSet(eeprom.mod1man)
+    set mod1typeT $gaSet(eeprom.mod1type)
+    set gaSet(eeprom.mod1man)  $gaSet(eeprom.mod2man)
+    set gaSet(eeprom.mod1type) $gaSet(eeprom.mod2type)
+    set gaSet(eeprom.mod2man)  $mod1manT
+    set gaSet(eeprom.mod2type) $mod1typeT
+    puts "\n*LR9*LTA*"
+    puts "#### LoRa instead of modem 1 and modem 2"
+    parray gaSet eeprom.mod*
+  }
   
   if {$mode=="newUut"} {
     set ret [GetMac 10]
@@ -1125,17 +1150,23 @@ proc BuildEepromString {mode} {
   set gaSet(eeprom.mac) $mac
   #set mac 00:20:D2:AB:76:92
   
-  #set partNum [regsub -all {\.} $gaSet(DutFullName) /]
   if {$gaSet(manualMrktName)=="0"} {
-    set partNum [RetriveIdTraceData $gaSet(idBarcode) MKTItem4Barcode]
+    # 08:38 26/08/2024set partNum [RetriveIdTraceData $gaSet(idBarcode) MKTItem4Barcode]
+    foreach {res resTxt} [::RLWS::Get_MrktName  $gaSet(idBarcode)] {}
+    if {$res!=0} {
+      set gaSet(fail) $resTxt
+      return -1
+    } else {
+      set partNum $resTxt
+    }
   } else {
     set partNum $gaSet(manualMrktName)
   } 
   puts "BuildEepromString partNum:<$partNum>"
   if {$partNum=="-1"} {
-      set gaSet(fail) "Fail to get MKTItem4Barcode for $gaSet(idBarcode)"
-      return -1
-    }
+    set gaSet(fail) "Fail to get MKTItem4Barcode for $gaSet(idBarcode)"
+    return -1
+  }
   
   if {$gaSet(dutFam.ps)=="ACEX"} {
     set ps 12V
@@ -1275,17 +1306,23 @@ proc BuildEepromString {mode} {
 # ModMan
 # ***************************************************************************
 proc ModMan {cell} {
+  global gaSet
   switch -exact -- [string range $cell 1 end] {
     HSP - L1 - L2 - L3 - L4 - LG {return QUECTEL}
     WF                           {return AZUREWAVE}
-    lora                         {return RAK}
+    lora                         {
+                                    switch -exact -- $gaSet(dutFam.lora) {
+                                       LR1 - LR2 - LR3 - LR4 - LR6 - LR7 - LRA - LRB - LRC {return RAK}
+                                       LR9 {return Ushine}
+                                    }  
+    }
     L450A                        {return Unitac}
     L450B                        {return Unitac}
     5G                           {return "SIERRA WIRELESS"}
     WH                           {return GATEWORKS}
     L4P                          {return Sequans}
     LTA - LTG                    {return Telit} 
-    LR9                          {return Ushine} 
+    xxLR9                        {return Ushine} 
   }
 }  
 # ***************************************************************************
@@ -1358,7 +1395,7 @@ proc GetMac {qty} {
 # ***************************************************************************
 # RetriveIdTaceData
 # ***************************************************************************
-proc RetriveIdTraceData {args} {
+proc neRetriveIdTraceData {args} {
   global gaSet
   set gaSet(fail) ""
   puts "RetriveIdTaceData $args"
@@ -1413,7 +1450,14 @@ proc GetPcbID {board} {
   if {$barc==""} {
     # do nothing
   } else {
-    set pcbName [RetriveIdTraceData $barc PCBTraceabilityIDData]
+    # 08:40 26/08/2024set pcbName [RetriveIdTraceData $barc PCBTraceabilityIDData]
+    foreach {res resTxt} [::RLWS::Get_PcbTraceIdData $barc {pcb}] {}
+    if {$res!=0} {
+      set gaSet(fail) $resTxt
+      return -1
+    } else {
+      set pcbName $resTxt
+    }
   }
   puts "GetPcbID board:<$board> barc:<$barc> pcbName:<$pcbName>" 
   if {$pcbName=="-1"} {

@@ -263,15 +263,17 @@ proc ReadBarcode {} {
 proc UnregIdBarcode {barcode {mac {}}} {
   global gaSet
   Status "Unreg ID Barcode $barcode"
-  set res [UnregIdMac $barcode $mac]
+  # 08:28 26/08/2024set res [UnregIdMac $barcode $mac]
+  foreach {res resTxt} [::RLWS::Disconnect_Barcode $barcode $mac] {}
     
   puts "\nUnreg ID Barcode $barcode res:<$res>\n"
-  if {$res=="OK" || [string match "*No records to Delete by ID-Number*" $res]} {
+  if {$res=="0" || [string match "*Disconnected*" $resTxt]} {
     set ret 0
   } else {
     set ret $res
   }
-  AddToPairLog $gaSet(pair) "Unreg ID Barcode $barcode mac:<$mac> res:<$res> ret:<$ret>"
+  #AddToPairLog $gaSet(pair) "Unreg ID Barcode $barcode mac:<$mac> res:<$res> ret:<$ret>"
+  AddToPairLog $gaSet(pair) "$resTxt"
   return $ret
 }
 
