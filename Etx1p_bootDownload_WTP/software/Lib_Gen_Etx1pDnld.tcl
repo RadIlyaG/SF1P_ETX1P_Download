@@ -897,21 +897,26 @@ proc RetriveDutFam {{dutInitName ""}} {
   
   regexp {([A-Z0-9\-\_]+)\.E?} $dutInitName ma gaSet(dutFam.sf)
   switch -exact -- $gaSet(dutFam.sf) {
-    SF-1P - ETX-1P - SF-1P_ICE - ETX-1P_SFC - SF-1P_ANG {set gaSet(appPrompt) "-1p#"}
+    SF-1P - ETX-1P - SF-1P_ICE - ETX-1P_SFC - SF-1P_ANG - ETX-1P_A {set gaSet(appPrompt) "-1p#"}
     VB-101V {set gaSet(appPrompt) "VB101V#"}
   }
   
-  if {$gaSet(dutFam.sf)=="ETX-1P" || $gaSet(dutFam.sf)=="ETX-1P_SFC"} {
+  if {$gaSet(dutFam.sf)=="ETX-1P" || $gaSet(dutFam.sf)=="ETX-1P_SFC" || $gaSet(dutFam.sf)=="ETX-1P_A"} {
     set gaSet(dutFam.box) "ETX-1P"
+    # if ![regexp {1P\.([A-Z0-9]+)\.} $dutInitName ma gaSet(dutFam.ps)] {
+      # regexp {1P_SFC\.([A-Z0-9]+)\.} $dutInitName ma gaSet(dutFam.ps)
+    # }
     if ![regexp {1P\.([A-Z0-9]+)\.} $dutInitName ma gaSet(dutFam.ps)] {
-      regexp {1P_SFC\.([A-Z0-9]+)\.} $dutInitName ma gaSet(dutFam.ps)
+      if ![regexp {1P_SFC\.([A-Z0-9]+)\.} $dutInitName ma gaSet(dutFam.ps)] {
+        regexp {1P_A\.([A-Z0-9]+)\.} $dutInitName ma gaSet(dutFam.ps)
+      }
     }
   } else {
     regexp {P[A-Z_]*\.(E[R\d]?)\.} $dutInitName ma gaSet(dutFam.box)  
     regexp {E[R\d]?\.([A-Z0-9]+)\.} $dutInitName ma gaSet(dutFam.ps)
   }  
 
-  if {$gaSet(dutFam.sf)=="ETX-1P" || $gaSet(dutFam.sf)=="ETX-1P_SFC"} {
+  if {$gaSet(dutFam.sf)=="ETX-1P" || $gaSet(dutFam.sf)=="ETX-1P_SFC" || $gaSet(dutFam.sf)=="ETX-1P_A"} {
     set gaSet(dutFam.wanPorts)  "1SFP1UTP"
     set gaSet(dutFam.lanPorts)  "4UTP"
   } else {
@@ -955,7 +960,7 @@ proc RetriveDutFam {{dutInitName ""}} {
   }
   
   set gaSet(dutFam.cell) 0
-  foreach cell [list HSP L1 L2 L3 L4 L450A L450B 5G L4P LG LTA] {
+  foreach cell [list HSP L1 L2 L3 L4 L450A L450B 5G L4P LG LTA L5] {
     set qty [llength [lsearch -all [split $dutInitName .] $cell]]
     if $qty {
       set gaSet(dutFam.cell) $qty$cell
@@ -1308,7 +1313,7 @@ proc BuildEepromString {mode} {
 proc ModMan {cell} {
   global gaSet
   switch -exact -- [string range $cell 1 end] {
-    HSP - L1 - L2 - L3 - L4 - LG {return QUECTEL}
+    HSP - L1 - L2 - L3 - L4 - LG - L5 {return QUECTEL}
     WF                           {return AZUREWAVE}
     lora                         {
                                     switch -exact -- $gaSet(dutFam.lora) {
@@ -1359,6 +1364,7 @@ proc ModType {cell} {
     L4P   {return CA410M}
     LTA   {return MPLS83-X}
     LTG   {return MPLS83-W}
+    L5    {return EC25-J}
   }
 }    
 
@@ -1520,7 +1526,7 @@ proc SanityBarcodes {} {
 proc DtbDefine {} {
   global gaSet 
   puts "\n[MyTime] DtbDefine"
-  if {$gaSet(dutFam.sf)=="ETX-1P" || $gaSet(dutFam.sf)=="ETX-1P_SFC"} {
+  if {$gaSet(dutFam.sf)=="ETX-1P" || $gaSet(dutFam.sf)=="ETX-1P_SFC" || $gaSet(dutFam.sf)=="ETX-1P_A"} {
     set dtb armada-3720-Etx1p.dtb
   } elseif {$gaSet(dutFam.sf)=="SF-1P" || $gaSet(dutFam.sf)=="SF-1P_ICE" || $gaSet(dutFam.sf)=="SF-1P_ANG"} {
     if {$gaSet(dutFam.wanPorts) == "2U"} {
