@@ -165,6 +165,10 @@ set gaSet(DutFullName) ""
 set gaSet(enCrtPriLog) 0
 set gaSet(enStaticIp) 0
 
+if ![info exists gaSet(enDwnlBootParamImg)] {
+  set gaSet(enDwnlBootParamImg) 1
+}
+
 # set gaSet(linux_srvr_ip.1) 172.18.94.42
 # set gaSet(linux_srvr) 1
 # ToogleLinuxServerIp

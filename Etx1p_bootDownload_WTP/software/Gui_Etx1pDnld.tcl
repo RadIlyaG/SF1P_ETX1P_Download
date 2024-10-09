@@ -48,6 +48,9 @@ proc GUI {} {
       {radiobutton "One test ON"  init {} {} -value 1 -variable gaSet(oneTest)}
       {radiobutton "One test OFF" init {} {} -value 0 -variable gaSet(oneTest)}
       {separator}    
+      {radiobutton "Enable Download BootParam Image"  init {} {} -value 1 -variable gaSet(enDwnlBootParamImg)}
+      {radiobutton "Disable Download BootParam Image" init {} {} -value 0 -variable gaSet(enDwnlBootParamImg)}    
+      {separator}    
       {radiobutton "Enable create pri log file"  init {} {} -value 1 -variable gaSet(enCrtPriLog)}
       {radiobutton "Disable create pri log file" init {} {} -value 0 -variable gaSet(enCrtPriLog)}    
       {separator}    

@@ -186,6 +186,8 @@ proc SaveInit {} {
   puts $id "set gaSet(linux_srvr_ip) \"$gaSet(linux_srvr_ip)\""
   puts $id "set gaSet(secBoot) \"$gaSet(secBoot)\""
   
+  puts $id "set gaSet(enDwnlBootParamImg) \"$gaSet(enDwnlBootParamImg)\""
+  
   close $id   
 }
 
@@ -1189,6 +1191,8 @@ proc BuildEepromString {mode} {
     set ps FDC-I
   } elseif {$gaSet(dutFam.ps)=="RDC"} {
     set ps RDC-I
+  } elseif {$gaSet(dutFam.ps)=="D60V"} {
+    set ps D60V-I
   }  
   set gaSet(eeprom.ps) $ps
   

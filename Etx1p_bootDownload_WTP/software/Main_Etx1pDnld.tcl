@@ -20,7 +20,10 @@ proc BuildTests {} {
   
   lappend glTests SetEnv
   if {$gaSet(secBoot)==0} {
-    lappend glTests Download_FlashImage Download_BootParamImage
+    lappend glTests Download_FlashImage 
+    if $enDwnlBootParamImg {
+      lappend glTests Download_BootParamImage
+    }  
   }
   lappend glTests Eeprom
   lappend glTests RunBootNet ID
@@ -513,6 +516,41 @@ proc Download_FlashImage {} {
     set ret 0
   } else {
     set ret [ReadCom $com "Done" 120]
+  }
+  
+  if !$enDwnlBootParamImg {
+    if {$ret==0} {
+      set ret [Send $com "reset\r" "resetting .."]  
+    }       
+    
+    if {$ret==0} {
+      set pcpe no
+      set ret -1
+      for {set i 1} {$i<=20} {incr i} {
+        puts "\n $i" ; update
+        set ret [Send $com \r\r "g${i}g${i}g" 1]
+        set buffer [join $buffer ""]
+        if {[string match *E>* $buffer]} {
+          if {[string match {*PCPE>*} $buffer]} {
+            puts "\npcpe!!!\n";  update
+            set pcpe yes
+          }
+          set ret 0
+          break
+        }
+        
+      }
+      if {$ret!=0} {
+        set gaSet(fail) "The UUT doesn't respond by E>"
+      }  
+    }
+    
+    if {$ret==0} {
+      for {set i 1} {$i<=2} {incr i} {
+        set ret [EnvDefSaveEnv]
+        if {$ret==0} {break}
+      }
+    }
   }
   
   return $ret  
@@ -2157,4 +2195,27 @@ proc BootLedsPerf {} {
   }
   return 0
   
+}
+
+# ***************************************************************************
+# EnvDefSaveEnv
+# ***************************************************************************
+proc EnvDefSaveEnv {} {
+  puts "\n[MyTime] EnvDefSaveEnv"
+  global gaSet buffer
+  set com $gaSet(comDut)
+  set ret [Send $com "env default -f -a\r" "PCPE"]
+  if {$ret!=0} {
+    set gaSet(fail) "env default -f -a fail"
+    return $ret
+  }
+  set ret [Send $com "saveenv\r" "PCPE"]
+  if {$ret==0 && [string match {*w25q32dw with page size 256 Bytes*} $buffer] && \
+      [string match {*4 KiB, total 4 MiB*} $buffer] && \
+      [string match {*Writing to SPI flash...done*} $buffer]} {
+    return 0   
+  } else {
+    set gaSet(fail) "saveenv fail"
+    return -1
+  }
 }
