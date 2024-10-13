@@ -21,7 +21,7 @@ proc BuildTests {} {
   lappend glTests SetEnv
   if {$gaSet(secBoot)==0} {
     lappend glTests Download_FlashImage 
-    if $enDwnlBootParamImg {
+    if $gaSet(enDwnlBootParamImg) {
       lappend glTests Download_BootParamImage
     }  
   }
@@ -518,7 +518,7 @@ proc Download_FlashImage {} {
     set ret [ReadCom $com "Done" 120]
   }
   
-  if !$enDwnlBootParamImg {
+  if !$gaSet(enDwnlBootParamImg) {
     if {$ret==0} {
       set ret [Send $com "reset\r" "resetting .."]  
     }       
