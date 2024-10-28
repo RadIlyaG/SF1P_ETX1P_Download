@@ -38,6 +38,13 @@ proc BuildTests {} {
   }
   lappend glTests SOC_Flash_Memory SOC_i2C 
   lappend glTests FrontPanelLeds
+  if {[package vcompare $gaSet(dbrBootSwVer) "6.3"] < 0} {
+    ## boot < 6.3
+    ## do nothing
+  } else {
+    ## boot >= 6.3
+    Disable_Uboot
+  }  
   
   set gaSet(startFrom) [lindex $glTests 0]
   $gaGui(startFrom) configure -values $glTests -height [llength $glTests]
@@ -2364,8 +2371,46 @@ proc SecureBoot {} {
       if {$ret!=0} {return $ret}
     }
   }
-  
-  
-  
+ 
   return 0
+}
+
+# ***************************************************************************
+# Disable_Uboot
+# ***************************************************************************
+proc Disable_Uboot {} {
+  puts "\n[MyTime] Disable_Uboot"
+  global gaSet buffer
+  set gaSet(fail) "No \'PCPE\' respond"
+  for {set i 1} {$i<=20} {incr i} {
+    set ret [Send $com \r\r "PCPE>" 1]
+    if {$ret==0} {break}
+    if [string match {* E *} $buffer] {
+      Send $com "x\rx\r" "PCPE>" 1
+    }
+  }
+  if {$ret!=0} {
+    set gaSet(fail) "Login to Boot level fail" 
+    return -1
+  }
+  
+  set ret [Send $com "setenv bootdelay -2\r" "PCPE>"]
+  if {$ret!=0} {
+    set gaSet(fail) "setenv bootdelay fail"
+    return $ret
+  }
+  set ret [Send $com "saveenv\r" "PCPE>"]
+  if {$ret!=0} {
+    set gaSet(fail) "saveenv fail"
+    return $ret
+  }
+  
+  set ret [Send $com "reset\r" "any key to stop autoboot" 10]
+  ## Countdown should not appear!
+  if {$ret==0} {
+    set gaSet(fail) "Countdown to stop autoboot is appearing"
+    return -1
+  }
+
+  return 0  
 }
