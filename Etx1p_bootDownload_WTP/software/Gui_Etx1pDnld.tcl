@@ -195,10 +195,10 @@ proc GUI {} {
       set f $frTestPerf
       
       set frDUT  [frame $f.frDUT -bd 2 -relief groove] 
-        set labDUT [ttk::label $frDUT.labDUT -text "UUT's barcode" -width 15]
+        set labDUT [ttk::label $frDUT.labDUT -text "ID"]
         set gaGui(entDUT) [ttk::entry $frDUT.entDUT -justify center -width 14 -textvariable gaSet(entDUT)]
         bind $gaGui(entDUT)  <Return> {GetDbrName full}   
-        set gaGui(entDutFullName) [ttk::entry $frDUT.entDutFullName -width 35 -justify center -textvariable gaSet(DutFullName) -state disabled] ; #  -state disabled
+        set gaGui(entDutFullName) [ttk::entry $frDUT.entDutFullName -width 40 -justify center -textvariable gaSet(DutFullName) -state disabled] ; #  -state disabled
         pack $labDUT $gaGui(entDUT) $gaGui(entDutFullName) -side left -padx 2
         pack configure         $gaGui(entDutFullName) -fill x -expand yes
         

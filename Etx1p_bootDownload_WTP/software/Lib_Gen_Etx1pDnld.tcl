@@ -644,6 +644,8 @@ proc GetDbrSW {barcode} {
   puts "GetDbrSW barcode:<$barcode> gaSet(general.SWver):<$gaSet(general.SWver)>"
   set gaSet(general.flashImg)  "flash-image-[set boot]_[set gaSet(dutFam.mem)]G_.bin"
   puts "GetDbrSW barcode:<$barcode> gaSet(general.flashImg):<$gaSet(general.flashImg)>"
+  set gaSet(general.flashImg)  "flash-image-[set boot]_[set gaSet(dutFam.mem)]G_.bin"
+  puts "GetDbrSW barcode:<$barcode> gaSet(general.flashImg):<$gaSet(general.flashImg)>"
   
   # if ![info exists gaSet(dbrAppSwPack)] {
     # set gaSet(dbrAppSwPack) ""
@@ -813,7 +815,7 @@ proc GetDbrName {mode} {
   
   #ToggleCustometSW
   if {$mode=="full"} {
-    BuildTests
+    #  BuildTests
     
     set ret [GetDbrSW $barcode]
     puts "GetDbrName ret of GetDbrSW:$ret" ; update
@@ -859,6 +861,18 @@ proc GetDbrName {mode} {
     $gaGui(entPCB_MAIN_IDbarc) selection range 0 end
     Status "Ready"
   }
+  
+  if {[package vcompare $gaSet(dbrBootSwVer) "6.3"] < 0} {
+    ## boot < 6.3
+    set gaSet(secBoot) 0
+  } else {
+    ## boot >= 6.3
+    set gaSet(secBoot) 1
+    set gaSet(general.flashImg)  B$gaSet(dbrBootSwVer)
+    puts "configure barcode:<$barcode> gaSet(general.flashImg):<$gaSet(general.flashImg)>"
+  }
+  
+  BuildTests
   
   return $ret
 }
@@ -1250,7 +1264,7 @@ proc BuildEepromString {mode} {
       append txt PCB_SUB_CARD_1_ID=,
     }
     append txt PS=${ps},
-    if {[string match *.HL.*  $gaSet(DutInitName)] || $gaSet(dutFam.sf) == "ETX-1P"} {
+    if {[string match *.HL.*  $gaSet(DutInitName)] || $gaSet(dutFam.sf)=="ETX-1P" || $gaSet(dutFam.sf)=="ETX-1P_SFC" || $gaSet(dutFam.sf)=="ETX-1P_A"} {
       ## HL option and ETX-1P don't have MicroSD
       append txt SD_SLOT=,
     } else {
@@ -1263,7 +1277,7 @@ proc BuildEepromString {mode} {
     append txt RS485_1=${1rs485},
     append txt RS485_2=${2rs485},
     #append txt POE=${poe},
-    if {$gaSet(dutFam.sf) == "ETX-1P"} {
+    if {$gaSet(dutFam.sf)=="ETX-1P" || $gaSet(dutFam.sf)=="ETX-1P_SFC" || $gaSet(dutFam.sf)=="ETX-1P_A"} {
       append txt DRY_CONTACT_IN_OUT=,
     } else {
       append txt DRY_CONTACT_IN_OUT=2_2,

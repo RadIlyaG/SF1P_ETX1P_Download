@@ -18,12 +18,16 @@ proc BuildTests {} {
   #  lappend glTests [list Eeprom]
   # }
   
-  lappend glTests SetEnv
+  
   if {$gaSet(secBoot)==0} {
+    lappend glTests SetEnv
     lappend glTests Download_FlashImage 
     if $gaSet(enDwnlBootParamImg) {
       lappend glTests Download_BootParamImage
     }  
+  } else {
+    lappend glTests SecureBoot
+    lappend glTests SetEnv
   }
   lappend glTests Eeprom
   lappend glTests RunBootNet ID
@@ -402,45 +406,41 @@ proc SetEnv {} {
   set ret [Send $com "setenv netmask 255.255.255.0\r" "PCPE>"]
   if {$ret!=0} {return $ret}
   
-  # 10:14 28/03/2023
-  # switch -exact -- $gaSet(UutOpt) {
-    # ETX1P {set dtb armada-3720-Etx1p.dtb}
-    # SF1P-2UTP    {set dtb armada-3720-SF1p.dtb}
-    # SF1P-4UTP    {set dtb armada-3720-SF1p_superSet.dtb}
-    # SF1P-4UTP-HL {set dtb armada-3720-SF1p_superSet_hl.dtb}
-  # }
-  # if {$gaSet(dutFam.sf)=="ETX-1P"} {
-    # set dtb armada-3720-Etx1p.dtb
-  # } elseif {$gaSet(dutFam.sf)=="SF-1P" || $gaSet(dutFam.sf)=="SF-1P_ICE"} {
-    # if {$gaSet(dutFam.wanPorts) == "2U"} {
-      # set dtb armada-3720-SF1p.dtb
-    # } else {
-      # if {[string match *.HL.*  $gaSet(DutInitName)]} {
-        # set dtb armada-3720-SF1p_superSet_hl.dtb
-      # } elseif {[string match *.R06*  $gaSet(DutInitName)]} {
-        # set dtb armada-3720-SF1p_superSet_cp2.dtb
-      # } else {
-        # set dtb armada-3720-SF1p_superSet.dtb
-      # }
-      # set mainPcbId [string toupper $gaSet(mainPcbId)]
-      # set res [regexp {REV([\d\.]+)[A-Z]} $mainPcbId  ma mainHW]
-      # if {$res==0} {
-        # set gaSet(fail) "Fail to retrive MAIN_CARD_HW_VERSION"
-        # return -1
-      # }
-      # if {$mainHW >= 0.6} {
-        # set dtb armada-3720-SF1p_superSet_cp2.dtb
-      # }
-    # }
-  # }
-  
-  set dtb [DtbDefine]
-  if {$dtb=="-1"} {return $dtb}
-  
-  if [info exists gaSet(log.$gaSet(pair))] {
-    AddToPairLog $gaSet(pair) "Armada: $dtb"  
+    
+  if !$gaSet(secBoot) {
+    set dtb [DtbDefine]
+    if {$dtb=="-1"} {return $dtb}
+    
+    if [info exists gaSet(log.$gaSet(pair))] {
+      AddToPairLog $gaSet(pair) "Armada: $dtb"  
+    }
+    set ret [Send $com "setenv fdt_name boot/$dtb\r" "PCPE>"]
+  } else {
+    set gaSet(fail) "Set Environment Fail"
+    set ret [Send $com "env default -f -a\r" "default environment"]
+    if {$ret!=0} {return $ret}
+    set gaSet(fail) "Save Environment Fail"
+    set ret [Send $com "saveenv\r" "SPI flash...done"]
+    if {$ret!=0} {return $ret}
+    
+    if {$gaSet(dutFam.sf)=="ETX-1P" || $gaSet(dutFam.sf)=="ETX-1P_SFC" || $gaSet(dutFam.sf)=="ETX-1P_A"} {
+      set scr set_etx1p
+    } else {
+      if {[string match *.HL.*  $gaSet(DutInitName)]} {
+        set scr set_sf1p_superset_hl
+      } else {
+        set scr set_sf1p_superset_cp2
+      }
+    }
+    puts "\n[MyTime]Script:<$scr>"
+    set ret [Send $com "run $scr\r" "SPI flash...done"]
+    if {$ret!=0} {return $ret}
+    
+    
+    set ret [Send $com "setenv set_nfsroot \"setenv nfsserv\;setenv nfsserv root=/dev/nfs rootfstype=nfs nfsroot=\$serverip:/srv/nfs/pcpe-general,vers=2,tcp\"\r" "PCPE>>"]
+    if {$ret!=0} {return $ret}
   }
-  set ret [Send $com "setenv fdt_name boot/$dtb\r" "PCPE>"]
+  
   ## 28/07/2021 11:41:00set ret [Send $com "setenv fdt_name boot/armada-3720-Etx1p.dtb\r" "PCPE>"]
   if {$ret!=0} {return $ret}
   set ret [Send $com "setenv eth1addr  00:5${::hostVal}:82:11:21:${gaSet(pair)}$gaSet(pair)\r" "PCPE>"]
@@ -456,11 +456,12 @@ proc SetEnv {} {
   
   set ret [Send $com "setenv NFS_VARIANT general\r" "PCPE>"]
   set ret [Send $com "setenv config_nfs \"setenv NFS_DIR /srv/nfs/pcpe-general\"\r" "PCPE>"]
-  
-  if $gaSet(enStaticIp) {
-    set ret [Send $com "setenv set_bootnetargs \"setenv bootargs console=ttyMV0,115200 earlycon=ar3700_uart,0xd0012000 \
-        root=/dev/nfs rw rootwait rootfstype=nfs ip=\$ipaddr:\$serverip:\$gatewayip:\$netmask:\$hostname:lan0:none \
-        nfsroot=\$serverip:/srv/nfs/pcpe-general,vers=2,tcp \$NFS_TYPE\"\r" "PCPE>"]
+  if !$gaSet(secBoot) {
+    if $gaSet(enStaticIp) {
+      set ret [Send $com "setenv set_bootnetargs \"setenv bootargs console=ttyMV0,115200 earlycon=ar3700_uart,0xd0012000 \
+          root=/dev/nfs rw rootwait rootfstype=nfs ip=\$ipaddr:\$serverip:\$gatewayip:\$netmask:\$hostname:lan0:none \
+          nfsroot=\$serverip:/srv/nfs/pcpe-general,vers=2,tcp \$NFS_TYPE\"\r" "PCPE>"]
+    }
   }
   
   set ret [Send $com "saveenv\r" "PCPE>"]
@@ -799,8 +800,9 @@ proc RunBootNet {} {
   }
   if {$ret!=0} {return $ret} 
   
-  set ret [SetEnv]
-  if {$ret!=0} {return $ret} 
+  # 11:34 15/10/2024
+  #set ret [SetEnv]
+  #if {$ret!=0} {return $ret} 
   
   Send $com reset\r "stam" 3
   for {set i 1} {$i<=20} {incr i} {
@@ -936,7 +938,7 @@ proc RunBootNet {} {
       puts ""
       Status "Boot up to \'user>\'"
       puts "[MyTime] UserLoop $us" ; update
-      set maxWait 600
+      set maxWait 900; #600
       set gaSet(fail) "Can't reach \'user>\' after $maxWait sec"
       set ret [ReadCom $com "user>" $maxWait]
       if {$ret==0} {break}
@@ -1633,6 +1635,9 @@ proc ReadBootParams {} {
   puts "gaSet(dbrBootSwVer):<$gaSet(dbrBootSwVer)> dbrBootSwVer:<$dbrBootSwVer>"
   # set res [string match {*U-Boot 2017.03.VER1.0.2-armada-17.10.2*} $gaSet(loginBuffer)]
   set res [string match *VER$dbrBootSwVer* $gaSet(loginBuffer)]
+  if {$res==0} {
+    set res [string match *$dbrBootSwVer* $gaSet(loginBuffer)]
+  }
   if {$res == 0} {
     OpenPio 
     Power all off
@@ -1657,6 +1662,9 @@ proc ReadBootParams {} {
   
     # set res [string match {*U-Boot 2017.03.VER1.0.2-armada-17.10.2*} $gaSet(loginBuffer)]
     set res [string match *VER$dbrBootSwVer* $gaSet(loginBuffer)]
+    if {$res==0} {
+      set res [string match *$dbrBootSwVer* $gaSet(loginBuffer)]
+    }
     if {$res == 0} {
       # set gaSet(fail) "No \'U-Boot 2017.03-armada-17.10.2\' in Boot"
       set gaSet(fail) "No \'$gaSet(dbrBootSwVer)\' in Boot"
@@ -2218,4 +2226,146 @@ proc EnvDefSaveEnv {} {
     set gaSet(fail) "saveenv fail"
     return -1
   }
+}
+# ***************************************************************************
+# SecureBoot
+# ***************************************************************************
+proc SecureBoot {} {
+  puts "\n[MyTime] SecureBoot"
+  global gaSet buffer
+  set ttyDev "ttyUSB1"
+  set bootVer "6.3.5"
+  set com  $gaSet(comDut)
+  OpenPio 
+  Power all off
+  ClosePio
+  
+  # Status "Reaching E"
+  # set ret -1
+  # for {set i 1} {$i<=10} {incr i} {
+    # set ret [Send $com \r\r "gggg" 1]
+    # set buffer [join $buffer ""]
+    # if {[string match *E>* $buffer]} {
+      # set ret 0
+      # break
+    # }
+  # }
+  # if {$ret!=0} {
+    # set gaSet(fail) "The UUT doesn't respond by E>"
+    # return $ret
+  # }
+  
+  
+  RLSound::Play information
+  set res [DialogBox -title "SecureBoot" -type "Ok Cancel" \
+      -message "Connect $ttyDev cable to CONTROL port" -icon images/info]
+  if {$res=="Cancel"} {
+    set gaSet(fail) "User stop" 
+    return -2
+  }
+  
+  set ret [catch {exec python.exe Etx1p_secureBoot.py goto_sec_boot $gaSet(linux_srvr_ip) $bootVer $ttyDev NA} res]
+  puts "res after goto_sec_boot: <$res>\n"
+  if {$ret==1} {    
+    set gaSet(fail) "Can't reach secureBoot $bootVer"
+    return -1
+  }
+  if ![string match "*fuse_$bootVer.bin*" $res] {
+    set gaSet(fail) "No fuse_$bootVer.bin"
+    return -1
+  }
+  
+  after 1000 {set x 1}
+    OpenPio 
+    Power all on
+    Power all on
+    ClosePio
+  
+  
+  set ret [catch {exec python.exe Etx1p_secureBoot.py fuse_new $gaSet(linux_srvr_ip) $bootVer $ttyDev NA} res]
+  puts "res after fuse_new: <$res>\n"
+  if ![string match "*Deployment successful*" $res] {
+    set gaSet(fail) "Can't get Deployment successful"
+    #return -1
+    RLSound::Play information
+    set res [DialogBox -title "SecureBoot" -type "Ok Cancel" \
+        -message "Set Jumpers in Normal Mode" -icon images/info]
+    if {$res=="Cancel"} {
+      set gaSet(fail) "User stop" 
+      return -2
+    }
+    for {set i 1} {$i<=3} {incr i} {
+      after [expr {$i * 1000}] {
+        OpenPio 
+        Power all off
+        after 2000
+        Power all on
+        ClosePio
+      }
+      set boot_img "fuse_6.3.5.bin"
+      set ret [catch {exec python.exe Etx1p_secureBoot.py fuse_update $gaSet(linux_srvr_ip) $bootVer $ttyDev $boot_img} res]
+      puts "res after fuse_update: <$res>\n"
+    }  
+  }
+  
+    
+  if 1 {
+    #RLEH::Open
+    set ret [Wait "Wait for fusing" 40]
+    OpenPio 
+    Power all off
+    
+    RLSound::Play information
+    set res [DialogBox -title "SecureBoot" -type "Ok Cancel" \
+        -message "Set Jumpers in Normal Mode\n\
+        Connect Windows COM cable to CONTROL port" -icon images/info]
+    if {$res=="Cancel"} {
+      set gaSet(fail) "User stop" 
+      return -2
+    }
+    
+    Power all on
+    ClosePio
+    #RLEH::Close
+    
+    set gaSet(fail) "No \'PCPE\' respond"
+    for {set i 1} {$i<=20} {incr i} {
+      set ret [Send $com \r\r "PCPE>" 1]
+      if {$ret==0} {break}
+      if [string match {* E *} $buffer] {
+        Send $com "x\rx\r" "PCPE>" 1
+      }
+    }
+    
+    if 0 {
+    
+      set gaSet(fail) "Set Environment Fail"
+      set ret [Send $com "env default -f -a\r" "default environment"]
+      if {$ret!=0} {return $ret}
+      set gaSet(fail) "Save Environment Fail"
+      set ret [Send $com "saveenv\r" "SPI flash...done"]
+      if {$ret!=0} {return $ret}
+      
+      if {$gaSet(dutFam.sf)=="ETX-1P" || $gaSet(dutFam.sf)=="ETX-1P_SFC" || $gaSet(dutFam.sf)=="ETX-1P_A"} {
+        set scr set_etx1p
+      } else {
+        if {[string match *.HL.*  $gaSet(DutInitName)]} {
+          set scr set_sf1p_superset_hl
+        } else {
+          set scr set_sf1p_superset_cp2
+        }
+      }
+      puts "\n[MyTime]Script:<$scr>"
+      set ret [Send $com "run $scr\r" "SPI flash...done"]
+      if {$ret!=0} {return $ret}
+      
+      
+      set ret [Send $com "setenv set_nfsroot \"setenv nfsserv\;setenv nfsserv root=/dev/nfs rootfstype=nfs nfsroot=\$serverip:/srv/nfs/pcpe-general,vers=2,tcp\r" "PCPE>>"]
+      if {$ret!=0} {return $ret}
+    }
+  }
+  
+  
+  
+  return 0
 }
