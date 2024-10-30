@@ -174,7 +174,7 @@ if ![info exists gaSet(enDwnlBootParamImg)] {
 # ToogleLinuxServerIp
 
 GUI
-BuildTests
+# BuildTests
 ToggleCustometSW
 update
 update

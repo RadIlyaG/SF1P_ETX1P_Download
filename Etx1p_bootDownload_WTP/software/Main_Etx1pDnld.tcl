@@ -807,9 +807,10 @@ proc RunBootNet {} {
   }
   if {$ret!=0} {return $ret} 
   
-  # 11:34 15/10/2024
-  #set ret [SetEnv]
-  #if {$ret!=0} {return $ret} 
+  if {$gaSet(secBoot)==0} {
+    set ret [SetEnv]
+    if {$ret!=0} {return $ret} 
+  }
   
   Send $com reset\r "stam" 3
   for {set i 1} {$i<=20} {incr i} {
