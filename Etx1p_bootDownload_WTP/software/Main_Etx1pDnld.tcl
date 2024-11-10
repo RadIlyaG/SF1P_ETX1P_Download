@@ -38,12 +38,17 @@ proc BuildTests {} {
   }
   lappend glTests SOC_Flash_Memory SOC_i2C 
   lappend glTests FrontPanelLeds
-  if {[package vcompare $gaSet(dbrBootSwVer) "6.3"] < 0} {
+  if [info exists gaSet(dbrBootSwVer)] {
+    set dbrBootSwVer $gaSet(dbrBootSwVer)
+  } else {
+    set dbrBootSwVer 1.1
+  }
+  if {[package vcompare $dbrBootSwVer "6.3"] < 0} {
     ## boot < 6.3
     ## do nothing
   } else {
     ## boot >= 6.3
-    Disable_Uboot
+    lappend glTests Disable_Uboot
   }  
   
   set gaSet(startFrom) [lindex $glTests 0]
@@ -515,7 +520,7 @@ proc Download_FlashImage {} {
   # set gaSet(general.flashImg) $flashImg
   
   if [info exists gaSet(log.$gaSet(pair))] {
-    AddToPairLog $gaSet(pair) "Flash Image: $flashImg"  
+    AddToPairLog $gaSet(pair) "Boot: $flashImg"  
   }
   
   set ret [Send $com "bubt $flashImg spi tftp\r" "Done"]
@@ -1646,6 +1651,7 @@ proc ReadBootParams {} {
   if {$res==0} {
     set res [string match *$dbrBootSwVer* $gaSet(loginBuffer)]
   }
+  
   if {$res == 0} {
     OpenPio 
     Power all off
@@ -1679,6 +1685,17 @@ proc ReadBootParams {} {
       return -1
     }
   }
+  
+  ## don't do it 09:28 10/11/2024
+  # set ma ""; set val ""
+  # ## armada-17.10.2 6.3.6 /
+  # regexp {armada[\-\d\.]+\s([\d\.]+)\s/} $gaSet(loginBuffer) ma val
+  # puts "ma:<$ma> val:<$val>"
+  # AddToPairLog $gaSet(pair) "Boot: $val"
+  # if {$val != $dbrBootSwVer} {
+    # set gaSet(fail) "No \'$gaSet(dbrBootSwVer)\' in Boot"
+    # return -1
+  # }
   
   # set res [string match {*Nov 22 2021*} $gaSet(loginBuffer)]
   # if {$res == 0} {
@@ -2241,8 +2258,9 @@ proc EnvDefSaveEnv {} {
 proc SecureBoot {} {
   puts "\n[MyTime] SecureBoot"
   global gaSet buffer
-  set ttyDev "ttyUSB1"
-  set bootVer "6.3.5"
+  set ttyDev $gaSet(ttyDev) ; #"ttyUSB1"
+  set bootVer $gaSet(dbrBootSwVer) ; #"6.3.5"
+  set boot_img "fuse_${gaSet(dbrBootSwVer)}.bin"
   set com  $gaSet(comDut)
   OpenPio 
   Power all off
@@ -2264,6 +2282,7 @@ proc SecureBoot {} {
   # }
   
   
+  
   RLSound::Play information
   set res [DialogBox -title "SecureBoot" -type "Ok Cancel" \
       -message "Connect $ttyDev cable to CONTROL port" -icon images/info]
@@ -2272,7 +2291,9 @@ proc SecureBoot {} {
     return -2
   }
   
-  set ret [catch {exec python.exe Etx1p_secureBoot.py goto_sec_boot $gaSet(linux_srvr_ip) $bootVer $ttyDev NA} res]
+  
+  
+  set ret [catch {exec python.exe Etx1p_secureBoot.py goto_sec_boot $gaSet(linux_srvr_ip) $gaSet(dbrBootSwVer)  $gaSet(ttyDev)  NA} res]
   puts "res after goto_sec_boot: <$res>\n"
   if {$ret==1} {    
     set gaSet(fail) "Can't reach secureBoot $bootVer"
@@ -2283,42 +2304,29 @@ proc SecureBoot {} {
     return -1
   }
   
-  after 1000 {set x 1}
-    OpenPio 
-    Power all on
-    Power all on
-    ClosePio
+  # after 1000 {set x 1}
+  OpenPio 
+  Power all on
+    # Power all on
+  ClosePio
   
-  
-  set ret [catch {exec python.exe Etx1p_secureBoot.py fuse_new $gaSet(linux_srvr_ip) $bootVer $ttyDev NA} res]
-  puts "res after fuse_new: <$res>\n"
-  if ![string match "*Deployment successful*" $res] {
-    set gaSet(fail) "Can't get Deployment successful"
-    #return -1
-    RLSound::Play information
-    set res [DialogBox -title "SecureBoot" -type "Ok Cancel" \
-        -message "Set Jumpers in Normal Mode" -icon images/info]
-    if {$res=="Cancel"} {
-      set gaSet(fail) "User stop" 
-      return -2
-    }
-    for {set i 1} {$i<=3} {incr i} {
-      after [expr {$i * 1000}] {
-        OpenPio 
-        Power all off
-        after 2000
-        Power all on
-        ClosePio
-      }
-      set boot_img "fuse_6.3.5.bin"
-      set ret [catch {exec python.exe Etx1p_secureBoot.py fuse_update $gaSet(linux_srvr_ip) $bootVer $ttyDev $boot_img} res]
-      puts "res after fuse_update: <$res>\n"
-    }  
+  set ret [catch {exec python.exe Etx1p_secureBoot.py get_e_py $gaSet(linux_srvr_ip) $gaSet(dbrBootSwVer) $gaSet(ttyDev) NA} res]; puts $res
+  if ![regexp {mode:(\w+)} $res m val] {
+    set gaSet(fail) "Can't get mode wtp or PCPE"
+    return -1
   }
+  set mode $val
   
-    
-  if 1 {
-    #RLEH::Open
+  puts "\nmode:<$mode>\n"
+  if {$mode=="wtp"} {
+  
+    set ret [catch {exec python.exe Etx1p_secureBoot.py fuse_new $gaSet(linux_srvr_ip) $bootVer $ttyDev NA} res]
+    puts "res after fuse_new: <$res>\n"
+  
+    if ![string match "*Deployment successful*" $res] {
+      set gaSet(fail) "Can't get Deployment successful"
+      return -1
+    }  
     set ret [Wait "Wait for fusing" 40]
     OpenPio 
     Power all off
@@ -2344,6 +2352,43 @@ proc SecureBoot {} {
         Send $com "x\rx\r" "PCPE>" 1
       }
     }
+    
+  } elseif {$mode=="PCPE"} {  
+    #GuiPower 1 0
+    #RLSound::Play information
+    #set res [DialogBox -title "SecureBoot" -type "Ok Cancel" \
+        -message "Set Jumpers in Normal Mode" -icon images/info]
+    #after 1000    
+    #if {$res=="Cancel"} {
+    #  set gaSet(fail) "User stop" 
+    #  return -2
+    #}
+    for {set i 1} {$i<=10} {incr i} {
+      GuiPower 1 0
+      after 2000
+      catch {exec python.exe Etx1p_secureBoot.py fuse_update $gaSet(linux_srvr_ip) $bootVer $ttyDev $boot_img &} res
+      after 500 {
+        GuiPower 1 1
+      }
+      update
+      set ret -1
+      #catch {exec python.exe Etx1p_secureBoot.py fuse_update $gaSet(linux_srvr_ip) $bootVer $ttyDev $boot_img &} res
+      puts "res after fuse_update: <$res>\n"
+      if [string match "*FLASHED SUCCESSFULLY*" $res] {
+        set ret 0
+        break
+      } else {
+        set gaSet(fail) "SecureBoot Update fail"
+      }
+    }  
+  }
+  
+  if {$ret!=0} {return $ret}
+  
+    
+  if 1 {
+    #RLEH::Open
+    
     
     if 0 {
     
@@ -2373,7 +2418,7 @@ proc SecureBoot {} {
     }
   }
  
-  return 0
+  return $ret
 }
 
 # ***************************************************************************
@@ -2382,6 +2427,7 @@ proc SecureBoot {} {
 proc Disable_Uboot {} {
   puts "\n[MyTime] Disable_Uboot"
   global gaSet buffer
+  set com  $gaSet(comDut)
   set gaSet(fail) "No \'PCPE\' respond"
   for {set i 1} {$i<=20} {incr i} {
     set ret [Send $com \r\r "PCPE>" 1]

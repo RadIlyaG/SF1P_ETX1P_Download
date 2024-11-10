@@ -181,7 +181,7 @@ proc GUI {} {
         set gaGui(chbCustGen) [ttk::label $fr.rad22 -text "SW Ver.: $gaSet(safaricom.SWver)"]
         pack $gaGui(chbCustGen)  -padx 2 -pady 2 -anchor w
         
-        set gaGui(flashImg) [ttk::label $fr.flashImg -text "Flash Image: $gaSet(general.flashImg)" ]
+        set gaGui(flashImg) [ttk::label $fr.flashImg -text "Boot: $gaSet(general.flashImg)" ]
         pack $gaGui(flashImg)  -padx 2 -pady 2 -anchor w
         
         set gaGui(bootScript) [ttk::label $fr.lavbootScript -text "Boot Script: $gaSet(bootScript)" ]
@@ -650,7 +650,7 @@ proc GuiLinuxSetup {} {
       grid $labSW $cmbSW -sticky w -padx 2 -pady 2
       
       
-      set lab5 [ttk::label $fr2.lab5  -text "Flash Image: " -width $labelWidth] 
+      set lab5 [ttk::label $fr2.lab5  -text "Boot: " -width $labelWidth] 
       set cmb5 [ttk::combobox $fr2.cmb5  -textvariable gaTmpSet(general.flashImg)  -values $flashs -width 30 -justify center]
       grid $lab5 $cmb5 -sticky w -padx 2 -pady 2 ; #-state disabled
       
@@ -850,7 +850,7 @@ proc ToggleCustometSW {} {
   $gaGui(pcpeGen) configure -text "Package: $gaSet(general.pcpes)"   
   $gaGui(chbCustSaf) configure -text "Safaricom    ($gaSet(safaricom.SWver))"
   $gaGui(chbCustGen) configure -text "SW Ver.: $gaSet(general.SWver)" 
-  $gaGui(flashImg) configure -text "Flash Image: $gaSet(general.flashImg)"   
+  $gaGui(flashImg) configure -text "Boot: $gaSet(general.flashImg)"   
   $gaGui(bootScript) configure -text "Boot Script: $gaSet(bootScript)"    
   $gaGui(labBoot) configure -text "Boot version: $gaSet(dbrBoot)"    
   $gaGui(labApp) configure -text "App Version: $gaSet(dbrApp)"    

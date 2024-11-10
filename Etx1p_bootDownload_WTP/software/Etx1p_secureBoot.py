@@ -17,11 +17,61 @@ def open_client(srvr_ip):
 def close_client(client):
     client.close()
     
+def py2(srvr_ip, boot_ver, ttyDev, boot_img):
+    client = open_client(srvr_ip)
+    cmd = f'python3 /home/etx-1p/ilya_g/py2.py'
+    print(cmd)
+    stdin, stdout, stderr = client.exec_command(cmd)
+    print(f'py2 stderr: {stderr.readlines()}') 
+    print(f'py2 stdout: {stdout.readlines()}') 
+    
+    close_client(client)
+    return True
+    
 def get_e(srvr_ip, boot_ver, ttyDev, boot_img):
     client = open_client(srvr_ip)
     print(f'get_e srvr_ip:{srvr_ip}, boot_ver:{boot_ver}, ttyDev:{ttyDev}, boot_img:{boot_img}')
     ret = True
-    cmd = f'echo 123456 | sudo -S ls /var/lib/tftpboot/secureboot/{boot_ver}/'
+    
+    # goto_sec_boot(srvr_ip, boot_ver, ttyDev, boot_img)
+    
+    cmd = f'read -n 1 buffer < /dev/{ttyDev}'
+    print(cmd)
+    stdin, stdout, stderr = client.exec_command(cmd)
+    print(f'READ stderr: {stderr.readlines()}') 
+    print(f'READ stdout: {stdout.readlines()}') 
+    
+    # cmd = f'echo 123456 | sudo -S echo -e "\r" > /dev/{ttyDev}'
+    cmd = f'echo -e "\\r" > /dev/{ttyDev}'
+    print(cmd)
+    stdin, stdout, stderr = client.exec_command(cmd)
+    print(f'send ENTER stderr: {stderr.readlines()}') 
+    print(f'send ENTER stdout: {stdout.readlines()}') 
+    
+    cmd = f'echo $buffer'
+    print(cmd)
+    stdin, stdout, stderr = client.exec_command(cmd)
+    print(f'Echo BUFFER stderr: {stderr.readlines()}') 
+    print(f'Echo BUFFER stdout: {stdout.readlines()}') 
+    
+    
+    close_client(client)
+    
+    return True
+    
+def get_e_py(srvr_ip, boot_ver, ttyDev, boot_img):
+    client = open_client(srvr_ip)
+    print(f'get_e_py srvr_ip:{srvr_ip}, boot_ver:{boot_ver}, ttyDev:{ttyDev}, boot_img:{boot_img}')
+    ret = True
+    
+    # goto_sec_boot(srvr_ip, boot_ver, ttyDev, boot_img)
+    
+    cmd = "/home/etx-1p/ilya_g/tst.py"
+    print(cmd)
+    stdin, stdout, stderr = client.exec_command(cmd)
+    print(f'get_e_py stderr: {stderr.readlines()}') 
+    print(f'get_e_py stdout: {stdout.readlines()}')
+    
     close_client(client)
     
     return True
@@ -56,7 +106,7 @@ def fuse_new(srvr_ip, boot_ver, ttyDev, boot_img):
     print(f'fuse_new grep {ttyDev} stdout: {stdout.readlines()}') 
     
     
-    cmd = f'cd /var/lib/tftpboot/secureboot/{boot_ver}; pwd; ./fuse_new.sh /dev/{ttyDev}'
+    cmd = f'cd /var/lib/tftpboot/secureboot/{boot_ver}; pwd; echo 123456 | sudo -S ./fuse_new.sh /dev/{ttyDev}'
     print(f'fuse_new_cmd:{cmd}')
     stdin, stdout, stderr = client.exec_command(cmd)
     print(f'fuse_new stdout: {stdout.readlines()}') 
@@ -71,11 +121,11 @@ def fuse_update(srvr_ip, boot_ver, ttyDev, boot_img):
     print(f'fuse_update srvr_ip:{srvr_ip}, boot_ver:{boot_ver}, ttyDev:{ttyDev}, boot_img:{boot_img}')
     ret = True
     
-    cmd = f'cd /var/lib/tftpboot/secureboot/{boot_ver}; pwd; ./fuse_new.sh /dev/{ttyDev}'
+    cmd = f'cd /var/lib/tftpboot/secureboot/{boot_ver}; pwd; echo 123456 | sudo -S ./fuse_update.sh /dev/{ttyDev} {boot_img}'
     print(f'fuse_update:{cmd}')
     stdin, stdout, stderr = client.exec_command(cmd)
-    ret1 = stdout.readlines()
-    print(f'fuse_update:{ret1}')    
+    print(f'fuse_update stdout: {stdout.readlines()}') 
+    print(f'fuse_update stderr: {stderr.readlines()}')    
     
     close_client(client)    
     return True

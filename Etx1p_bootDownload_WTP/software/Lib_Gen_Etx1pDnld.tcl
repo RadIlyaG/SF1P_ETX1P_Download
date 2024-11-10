@@ -198,6 +198,7 @@ proc SaveInit {} {
 proc GuiPower {n state} { 
   global gaSet descript
   puts "\nGuiPower $n $state"
+  catch {RLEH::Close}
   RLEH::Open
   #RLUsbPio::GetUsbChannels descript
   switch -exact -- $n {
@@ -209,7 +210,7 @@ proc GuiPower {n state} {
   if {$channel!="-1"} {
     foreach rb $portL {
       set id [RL[set gaSet(pioType)]Pio::Open $rb RBA $channel]
-      puts "rb:<$rb> id:<$id>"
+      puts "rb:<$rb> id:<$id> state:<$state>"
       RL[set gaSet(pioType)]Pio::Set $id $state
       RL[set gaSet(pioType)]Pio::Close $id
     }   
@@ -642,44 +643,14 @@ proc GetDbrSW {barcode} {
   
   set gaSet(general.SWver)     "vcpeos_[set sw]_arm.tar.gz"
   puts "GetDbrSW barcode:<$barcode> gaSet(general.SWver):<$gaSet(general.SWver)>"
-  set gaSet(general.flashImg)  "flash-image-[set boot]_[set gaSet(dutFam.mem)]G_.bin"
+  if !$gaSet(secBoot) {
+    set gaSet(general.flashImg)  "flash-image-[set boot]_[set gaSet(dutFam.mem)]G_.bin"
+  } else {
+    set gaSet(general.flashImg)  $boot
+  }
   puts "GetDbrSW barcode:<$barcode> gaSet(general.flashImg):<$gaSet(general.flashImg)>"
-  set gaSet(general.flashImg)  "flash-image-[set boot]_[set gaSet(dutFam.mem)]G_.bin"
-  puts "GetDbrSW barcode:<$barcode> gaSet(general.flashImg):<$gaSet(general.flashImg)>"
-  
-  # if ![info exists gaSet(dbrAppSwPack)] {
-    # set gaSet(dbrAppSwPack) ""
-  # }
-  # set dbrAppSwPackIndx [lsearch $b $gaSet(dbrAppSwPack)]  
-  # if {$dbrAppSwPackIndx<0} {
-    # set gaSet(fail) "There is no SW ID for $gaSet(dbrAppSwPack) ID:$barcode. Verify the Barcode."
-    # RLSound::Play fail
-	  # Status "Test FAIL"  #ff6464 ; # red
-    # DialogBox -aspect 2000 -type Ok -message $gaSet(fail) -icon images/error -title "Get DbrSW Problem"
-    # pack $gaGui(frFailStatus)  -anchor w
-	  # $gaSet(runTime) configure -text ""
-  	# return -1
-  # }
-  # set dbrSW [string trim [lindex $b [expr {1+$dbrAppSwPackIndx}]]]
-  # puts dbrSW:<$dbrSW>
-  # set gaSet(dbrApp) $dbrSW
-  
-  # set dbrBootSwPackIndx [lsearch $b $gaSet(dbrBootSwPack)]  
-  # if {$dbrBootSwPackIndx<0} {
-    # set gaSet(fail) "There is no Boot SW ID for $gaSet(dbrBootSwPack) ID:$barcode. Verify the Barcode."
-    # RLSound::Play fail
-	  # Status "Test FAIL"  #ff6464 ; # red
-    # DialogBox -aspect 2000 -type Ok -message $gaSet(fail) -icon images/error -title "Get DbrSW Problem"
-    # pack $gaGui(frFailStatus)  -anchor w
-	  # $gaSet(runTime) configure -text ""
-  	# return -1
-  # }
-  # set dbrBoot [string trim [lindex $b [expr {1+$dbrBootSwPackIndx}]]]
-  # puts dbrBoot:<$dbrBoot>
-  # set gaSet(dbrBoot) $dbrBoot
   
   pack forget $gaGui(frFailStatus)
-  
   
   ToggleCustometSW
   Status ""
