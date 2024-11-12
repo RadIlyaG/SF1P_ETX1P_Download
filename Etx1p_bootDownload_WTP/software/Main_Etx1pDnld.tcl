@@ -102,9 +102,10 @@ proc Testing {} {
     $gaSet(startTime) configure -text "$startTime ."
     AddToPairLog $gaSet(pair) "Test \'$testName\' started"
     set ret [$testName]
-    
-    
-    
+    if {$ret=="-1" && $testName=="RunBootNet" && $gaSet(fail)=="Can't get Kernel Image"} {
+      puts "\n **** [MyTime] Ret of $testName is: $ret. Second try \n" 
+      set ret [$testName]
+    }
     if {$ret==0} {
       set retTxt "PASS."
     } else {
@@ -790,26 +791,6 @@ proc RunBootNet {} {
     }
   }
   
-  #12:37 23/10/2022
-  if {$ret==0} {}
-  if {0} {
-    set ret [Send $com "printenv NFS_VARIANT\r" "PCPE>"] 
-    if {$ret!=0} {
-      set gaSet(fail) "Read NFS_VARIANT Fail"
-    } else {
-      set res [regexp {IANT=([\w\-\.]+)\s} $buffer ma var]
-      if {$res==0} {
-         set gaSet(fail) "Read NFS_VARIANT Fail"  
-         set ret -1
-      }
-      puts "NFS_VARIANT=<$var>"
-      puts "cust:<$gaSet(customer)>"
-      if {$gaSet(customer)!=$var} {
-        set gaSet(fail) "NFS_VARIANT is \'$var\'. Should be \'$gaSet(customer)\'" 
-        set ret -1  
-      }
-    } 
-  }
   if {$ret!=0} {return $ret} 
   
   if {$gaSet(secBoot)==0} {
@@ -852,7 +833,7 @@ proc RunBootNet {} {
   
   if {$ret==0} {
     Status "Boot up to \'exiting hardware virtualization\'"
-    set maxWait 900; #600
+    set maxWait 1500; #900; #600
     set gaSet(fail) "RunBootNet Fail after $maxWait"
     Send $com "run bootnet\r" "PCPE>"
     if [regexp {Kernel panic - not syncing: Aiee, killing interrupt handler!} $buffer ma] {
@@ -869,30 +850,36 @@ proc RunBootNet {} {
         set gaSet(fail) "Can't mount FS"
         return -1
       }
-      for {set i 1} {$i<=20} {incr i} {
-        set ret [Send $com \r\r "gggg" 1]
-        set buffer [join $buffer ""]
-        if {[string match *E>* $buffer]} {
-          set ret 0
-          break
-        }
+      if {$ret=="KernelImage"} {
+        set gaSet(fail) "Can't get Kernel Image"
+        return -1
       }
-      if {$ret!=0} {
-        set gaSet(fail) "The UUT doesn't respond by E>"
-      }  
-   
-      if {$ret==0} {
-        set gaSet(fail) "Boot after xx Fail"
-        set ret [Send $com "x\rx\r" "WTMI" 2] 
+      if {$gaSet(secBoot)==0} {
+        for {set i 1} {$i<=20} {incr i} {
+          set ret [Send $com \r\r "gggg" 1]
+          set buffer [join $buffer ""]
+          if {[string match *E>* $buffer]} {
+            set ret 0
+            break
+          }
+        }
         if {$ret!=0} {
-          set ret [Send $com "x\rx\r" "WTMI" 2]  
+          set gaSet(fail) "The UUT doesn't respond by E>"
+        }  
+     
+        if {$ret==0} {
+          set gaSet(fail) "Boot after xx Fail"
+          set ret [Send $com "x\rx\r" "WTMI" 2] 
           if {$ret!=0} {
             set ret [Send $com "x\rx\r" "WTMI" 2]  
-          }
-        } 
-      }
-      if {$ret==0} {
-        set ret [ReadCom $com "exiting hardware virtualization" $maxWait]
+            if {$ret!=0} {
+              set ret [Send $com "x\rx\r" "WTMI" 2]  
+            }
+          } 
+        }
+        if {$ret==0} {
+          set ret [ReadCom $com "exiting hardware virtualization" $maxWait]
+        }
       }
     }
   }
@@ -902,6 +889,10 @@ proc RunBootNet {} {
   }
   if {$ret=="KernelPanic"} {
     set gaSet(fail) "Can't mount FS"
+    return -1
+  }
+  if {$ret=="KernelImage"} {
+    set gaSet(fail) "Can't get Kernel Image"
     return -1
   }
   
@@ -924,7 +915,7 @@ proc RunBootNet {} {
       }
     }
     if {$ret!=0} {
-      set gaSet(fail) "The UUT doesn't respond by E>"
+      set gaSet(fail) "The UUT doesn't respond by E>."
     }  
   
     if {$ret==0} {
@@ -951,7 +942,7 @@ proc RunBootNet {} {
       puts ""
       Status "Boot up to \'user>\'"
       puts "[MyTime] UserLoop $us" ; update
-      set maxWait 900; #600
+      set maxWait 1800 ; #900; #600
       set gaSet(fail) "Can't reach \'user>\' after $maxWait sec"
       set ret [ReadCom $com "user>" $maxWait]
       if {$ret==0} {break}
@@ -971,57 +962,7 @@ proc RunBootNet {} {
       if {$ret=="linux" || $ret=="sys_reboot"} {}
       
       if {$ret=="sys_reboot"} {}
-      if 0 {
-        if {$ret=="linux"} {
-          OpenPio 
-          Power all off
-          after 4000
-          Power all on
-          ClosePio
-        }
-        set ret -1
-        for {set i 1} {$i<=20} {incr i} {
-          set ret [Send $com \r\r "gggg" 1]
-          set buffer [join $buffer ""]
-          if {[string match *E>* $buffer]} {
-            set ret 0
-            break
-          }
-        }
-        if {$ret!=0} {
-          set gaSet(fail) "The UUT doesn't respond by E>"
-          break
-        }  
-    
-        if {$ret==0} {
-          if {$gaSet(dnldMode)==1} {
-            if {[string match *PCPE>* $buffer]} {
-              set gaSet(fail) "No \'Starting kernel\' after boot"
-              set ret [Send $com "boot\r" "Starting kernel"]  
-            }
-          } elseif {$gaSet(dnldMode)==0} {
-            set gaSet(fail) "Boot after xx Fail"
-            set ret [Send $com "x\rx\r" "WTMI" 2] 
-            if {$ret!=0} {
-            set ret [Send $com "x\rx\r" "WTMI" 2]  
-              if {$ret!=0} {
-                set ret [Send $com "x\rx\r" "WTMI" 2]  
-              }
-            } 
-          }
-        }
-        if {$ret!=0} {
-          set gaSet(fail) "Boot after xx Fail"
-          break
-        } 
       
-#         if {$ret==0} {
-#           Status "Boot up to \'user>>\'"
-#           set maxWait 900
-#           set gaSet(fail) "Can't reach \'user>\' after $maxWait sec"
-#           set ret [ReadCom $com "user>" $maxWait]
-#         }
-      }
       puts "[MyTime] UserLoop $us ret:<$ret>" ; update
     }  
   }
@@ -2262,9 +2203,10 @@ proc SecureBoot {} {
   set bootVer $gaSet(dbrBootSwVer) ; #"6.3.5"
   set boot_img "fuse_${gaSet(dbrBootSwVer)}.bin"
   set com  $gaSet(comDut)
-  OpenPio 
-  Power all off
-  ClosePio
+  # OpenPio 
+  # Power all off
+  # ClosePio
+  GuiPower 1 0
   
   # Status "Reaching E"
   # set ret -1
@@ -2291,8 +2233,6 @@ proc SecureBoot {} {
     return -2
   }
   
-  
-  
   set ret [catch {exec python.exe Etx1p_secureBoot.py goto_sec_boot $gaSet(linux_srvr_ip) $gaSet(dbrBootSwVer)  $gaSet(ttyDev)  NA} res]
   puts "res after goto_sec_boot: <$res>\n"
   if {$ret==1} {    
@@ -2305,10 +2245,11 @@ proc SecureBoot {} {
   }
   
   # after 1000 {set x 1}
-  OpenPio 
-  Power all on
-    # Power all on
-  ClosePio
+  # OpenPio 
+  # Power all on
+    # # Power all on
+  # ClosePio
+   GuiPower 1 1
   
   set ret [catch {exec python.exe Etx1p_secureBoot.py get_e_py $gaSet(linux_srvr_ip) $gaSet(dbrBootSwVer) $gaSet(ttyDev) NA} res]; puts $res
   if ![regexp {mode:(\w+)} $res m val] {
@@ -2320,7 +2261,7 @@ proc SecureBoot {} {
   puts "\nmode:<$mode>\n"
   if {$mode=="wtp"} {
   
-    set ret [catch {exec python.exe Etx1p_secureBoot.py fuse_new $gaSet(linux_srvr_ip) $bootVer $ttyDev NA} res]
+    set ret [catch {exec python.exe Etx1p_secureBoot.py fuse_new $gaSet(linux_srvr_ip) $gaSet(dbrBootSwVer) $gaSet(ttyDev) NA} res]
     puts "res after fuse_new: <$res>\n"
   
     if ![string match "*Deployment successful*" $res] {
@@ -2328,8 +2269,9 @@ proc SecureBoot {} {
       return -1
     }  
     set ret [Wait "Wait for fusing" 40]
-    OpenPio 
-    Power all off
+    # OpenPio 
+    # Power all off
+    GuiPower 1 0
     
     RLSound::Play information
     set res [DialogBox -title "SecureBoot" -type "Ok Cancel" \
@@ -2340,8 +2282,9 @@ proc SecureBoot {} {
       return -2
     }
     
-    Power all on
-    ClosePio
+    # Power all on
+    # ClosePio
+    GuiPower 1 1
     #RLEH::Close
     
     set gaSet(fail) "No \'PCPE\' respond"
@@ -2366,7 +2309,7 @@ proc SecureBoot {} {
     for {set i 1} {$i<=10} {incr i} {
       GuiPower 1 0
       after 2000
-      catch {exec python.exe Etx1p_secureBoot.py fuse_update $gaSet(linux_srvr_ip) $bootVer $ttyDev $boot_img &} res
+      catch {exec python.exe Etx1p_secureBoot.py fuse_update $gaSet(linux_srvr_ip) $gaSet(dbrBootSwVer) $gaSet(ttyDev) "fuse_${gaSet(dbrBootSwVer)}.bin" &} res
       after 500 {
         GuiPower 1 1
       }

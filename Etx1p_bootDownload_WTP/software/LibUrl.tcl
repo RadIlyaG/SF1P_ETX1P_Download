@@ -5,7 +5,7 @@ package require json
 ::http::register https 8445 [list tls::socket -tls1 1]
 package require md5
 
-package provide RLWS 1.1
+package provide RLWS 1.2
 
 namespace eval RLWS { 
 
@@ -1229,10 +1229,116 @@ proc ::RLWS::Get_DigitalSerialCode {id} {
   }
   
   set value [lindex $resTxt [expr {1 + [lsearch $resTxt "DigitalSerial"]} ] ]
-  if {$value == 0} {
+  if {$value == 0 || $value == ""} {
     return [list -1 "Fail to get Digital Serial Code"]
   }
   return [list $res $value] 
+}
+# ***************************************************************************
+# Get_EmpName
+#  ::RLWS::Get_EmpName 114965
+#  
+#  Returns list of two values - result and resultText
+#   result may be -1 if WS fails,
+#                  0 if there is Employee Name (located at resultText)
+#   ::RLWS::Get_EmpName 114965 will return
+#       0 "KOBY LAZARY"
+# ***************************************************************************
+proc ::RLWS::Get_EmpName {empId} {
+  set procNameArgs [info level 0]
+  set procName [lindex $procNameArgs 0]
+  if $::RLWS::debugWS {puts "\n$procNameArgs"}
+  
+  set url "$::RLWS:::HttpsURL/rest/"
+  set param GetUserName\?employeeNumber=[set empId]
+  append url $param
+  set resLst [::RLWS::_operateWS $url "NA" "Employee Name"]
+  foreach {res resTxt} $resLst {}
+  if {$res!=0} {
+    return $resLst 
+  }
+  if {[llength $resTxt] == 0} {
+    foreach {pa_ret pa_resTxt} [::RLWS::Ping_Services] {
+      if $::RLWS::debugWS {puts "pa_ret:<$pa_ret> <$pa_resTxt>"}
+    }
+    if {$pa_ret != 0} {
+      return [list $pa_ret $pa_resTxt]
+    } else {
+      return [list -1 "Fail to get Employee Name"]
+    }
+  }
+  
+  set firstname [lindex $resTxt [expr {1 + [lsearch $resTxt "firstname"]} ] ]
+  if {$firstname == ""} {
+    return [list -1 "Fail to get Employee First Name"]
+  }
+  set secondname [lindex $resTxt [expr {1 + [lsearch $resTxt "secondname"]} ] ]
+  if {$secondname == ""} {
+    return [list -1 "Fail to get Employee Second Name"]
+  }
+  
+  return [list $res "$firstname $secondname"]  
+}
+
+# ***************************************************************************
+# Update_SimID_LoraGW
+#  ::RLWS::Update_SimID_LoraGW EA1004489579 89011703274284322239 0016C001F1109216
+#  
+#  Returns list of two values - result and resultText
+#   result may be -1 if WS fails,
+#                  0 if there is Update succeeded
+#   ::RLWS::Update_SimID_LoraGW EA1004489579 89011703274284322239 0016C001F1109216 will return
+#       0 "Update succeeded"
+#   ::RLWS::Update_SimID_LoraGW EA10044895 89011703274284322239 0016C001F1109216 will return
+#       -1 "Fail to get Update SimID and LoraGW"
+# ***************************************************************************
+proc ::RLWS::Update_SimID_LoraGW {id simId loraGw} {
+  set procNameArgs [info level 0]
+  set procName [lindex $procNameArgs 0]
+  if $::RLWS::debugWS {puts "\n$procNameArgs"}
+  
+  set simIdLen [string length $simId]
+  if {$simIdLen<18 || $simIdLen>22} {
+    return [list -1 "Length of ICCID is $simIdLen. Should be 18-22"]
+  }
+  if ![string is digit $simId] {
+    return [list -1 "ICCID is not digit number"]
+  }
+  
+  set loraGwLen [string length $loraGw]
+  if {$loraGwLen!=16} {
+    return [list -1 "Length of LoRa gateway ID is $loraGwLen. Should be 16"]
+  }
+  if ![string is xdigit $loraGw] {
+    return [list -1 "LoRa gateway ID is not hex string"]
+  }
+  
+  set barc [format %.11s $id]
+  set url "$::RLWS:::HttpsURL/rest/"
+  set param Update_SIM_ID_LORA_GW\?pID_NUMBER=[set barc]&pSIM_ID=[set simId]&pLORA_ID=[set loraGw]
+  append url $param
+  set resLst [::RLWS::_operateWS $url "NA" "Update SimID and LoraGW"]
+  foreach {res resTxt} $resLst {}
+  if {$res!=0} {
+    return $resLst 
+  }
+  set status [lindex $resTxt [expr {1 + [lsearch $resTxt "status"]} ] ]
+  if {[llength $resTxt] == 0 || $status=="1"} {
+    foreach {pa_ret pa_resTxt} [::RLWS::Ping_Services] {
+      if $::RLWS::debugWS {puts "pa_ret:<$pa_ret> <$pa_resTxt>"}
+    }
+    if {$pa_ret != 0} {
+      return [list $pa_ret $pa_resTxt]
+    } else {
+      return [list -1 "Fail to Update SimID and LoraGW"]
+    }
+  }
+  
+  if {$status==0} {
+    return [list 0 "Update succeeded"] 
+  } else {
+    return [list -1 $resTxt]
+  }  
 }
 
 # ***************************************************************************

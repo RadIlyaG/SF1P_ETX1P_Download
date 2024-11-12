@@ -66,7 +66,7 @@ def get_e_py(srvr_ip, boot_ver, ttyDev, boot_img):
     
     # goto_sec_boot(srvr_ip, boot_ver, ttyDev, boot_img)
     
-    cmd = "/home/etx-1p/ilya_g/tst.py"
+    cmd = f'/home/etx-1p/ilya_g/chk_mode.py {ttyDev}'
     print(cmd)
     stdin, stdout, stderr = client.exec_command(cmd)
     print(f'get_e_py stderr: {stderr.readlines()}') 
@@ -113,6 +113,11 @@ def fuse_new(srvr_ip, boot_ver, ttyDev, boot_img):
     print(f'fuse_new stderr: {stderr.readlines()}')    
     #time.sleep(1)
     
+    cmd = f'cd /var/lib/tftpboot/secureboot/{boot_ver}; pwd; echo 123456 | sudo -S./read_com.sh {ttyDev} reseting 20'
+    print(f'fuse_new_cmd:{cmd}')
+    stdin, stdout, stderr = client.exec_command(cmd)
+    print(f'fuse_new stdout: {stdout.readlines()}') 
+    print(f'fuse_new stderr: {stderr.readlines()}')    
     close_client(client)    
     return True
     

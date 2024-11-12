@@ -393,6 +393,11 @@ proc ReadCom {com inStr {timeout 10}} {
       set ret KernelPanic
       break
     }
+    if {$inStr=="exiting hardware virtualization" && \
+      ([regexp {can't get kernel image} $buff ma])} {
+      set ret KernelImage
+      break
+    }
     if {$inStr=="user>" && ([regexp {File not found boot/Image} $buffer ma] || [regexp {File not found boot/armada} $buffer ma])} {
       set ret FileNotFound
       break
@@ -1363,22 +1368,30 @@ proc ModType {cell} {
 proc GetMac {qty} {
   global gaSet buffer
   puts "[MyTime] GetMac $qty MACServer.exe" 
-  set macFile c:/temp/mac.$::GuiId.txt
-  exec $::RadAppsPath/MACServer.exe 0 $qty $macFile 1
-  set ret [catch {open $macFile r} id]
+  foreach {ret resTxt} [::RLWS::Get_Mac $qty] {}
   if {$ret!=0} {
-    set gaSet(fail) "Open Mac File fail"
+    set gaSet(fail) $resTxt
     return -1
   }
-  set buffer [read $id]
-  close $id
-  file delete $macFile
-  set ret [regexp -all {ERROR} $buffer]
-  if {$ret!=0} {
-    set gaSet(fail) "MACServer ERROR"
-    return -1
-  }
-  set mac [lindex $buffer 0]  ; # 1806F5F4763B
+  set mac $resTxt
+  
+  # set macFile c:/temp/mac.$::GuiId.txt
+  # exec $::RadAppsPath/MACServer.exe 0 $qty $macFile 1
+  # set ret [catch {open $macFile r} id]
+  # if {$ret!=0} {
+    # set gaSet(fail) "Open Mac File fail"
+    # return -1
+  # }
+  # set buffer [read $id]
+  # close $id
+  # file delete $macFile
+  # set ret [regexp -all {ERROR} $buffer]
+  # if {$ret!=0} {
+    # set gaSet(fail) "MACServer ERROR"
+    # return -1
+  # }
+  # set mac [lindex $buffer 0]  ; # 1806F5F4763B
+  
   puts "GetMac mac:<$mac>"
   return $mac    
 }
