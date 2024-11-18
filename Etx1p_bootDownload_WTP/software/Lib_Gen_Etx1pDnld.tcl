@@ -640,6 +640,11 @@ proc GetDbrSW {barcode} {
   }
   
   puts "GetDbrSW $barcode sw:<$sw> boot:<$boot>"
+  if {[package vcompare $boot "6.3"] < 0} {
+    set gaSet(secBoot) 0
+  } else {
+    set gaSet(secBoot) 1
+  }
   set gaSet(dbrBootSwVer) $boot
   after 1000
   
@@ -1149,6 +1154,7 @@ proc BuildEepromString {mode} {
   
   if {$gaSet(manualMrktName)=="0"} {
     # 08:38 26/08/2024set partNum [RetriveIdTraceData $gaSet(idBarcode) MKTItem4Barcode]
+    puts "BuildEepromString idBarcode:<$gaSet(idBarcode)>"
     foreach {res resTxt} [::RLWS::Get_MrktName  $gaSet(idBarcode)] {}
     if {$res!=0} {
       set gaSet(fail) $resTxt

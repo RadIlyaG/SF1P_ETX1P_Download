@@ -158,7 +158,7 @@ proc GUI {} {
         set gaGui(dnldMode) [ttk::checkbutton $fr.chbdnldMode -text "Update SW only"\
            -variable gaSet(dnldMode) -command BuildTests -state disabled]
         set gaGui(secBoot) [ttk::checkbutton $fr.chbsecBoot -text "Secure Boot"\
-           -variable gaSet(secBoot) -command BuildTests]
+           -variable gaSet(secBoot) -command BuildTests  -state disabled]
         pack $gaGui(dnldMode) -anchor w -padx 2 -pady 2 
         pack $gaGui(secBoot) -anchor w -padx 2 -pady 2         
       pack $fr -anchor w
