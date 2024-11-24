@@ -1146,13 +1146,32 @@ proc Login {} {
     return 0
   }
   set ret [Send $com su\r "assword"]
+  if {$gaSet(sw_ver) >= "6.3.0.75"} {
+    set gaSet(suPsw) "1qaz2wsx3E-"
+  } else {
+    set gaSet(suPsw) "1234"
+  }
+    
   set ret [Send $com 1234\r "-1p#" 3]
+  
   if {$ret=="-1"} {
-    if {[string match {*Login failed user*} $buffer]} {
-      set ret [Send $com su\r4\r "again" 3]
+    if {[string match {*password is not strong*} $buffer]} {
+      set ret [Send $com $gaSet(suPsw)\r "again"]
+      set ret [Send $com $gaSet(suPsw)\r "-1p#"]
+      set ret [Send $com save\r "bytes copied in"]
+      if {$ret==0 && [string match {*startup-config successfully*} $buffer]} {
+        set ret 0
+      } else {
+        set gaSet(fail) "Save new password fail"
+        set ret -1
+      }
+    } else {
+      if {[string match {*Login failed user*} $buffer]} {
+        set ret [Send $com su\r4\r "again" 3]
+      }
+      set ret [Send $com 4\r "again" 3]
+      set ret [Send $com 4\r "-1p#" 3]
     }
-    set ret [Send $com 4\r "again" 3]
-    set ret [Send $com 4\r "-1p#" 3]
   }
   if {$ret==0} {return $ret}
   
@@ -1190,11 +1209,23 @@ proc Login {} {
       set ret [Send $com su\r "assword"]
       set ret [Send $com 1234\r "-1p#" 3]
       if {$ret=="-1"} {
-        if {[string match {*Login failed user*} $buffer]} {
-          set ret [Send $com su\r4\r "again" 3]
+        if {[string match {*password is not strong*} $buffer]} {
+          set ret [Send $com $gaSet(suPsw)\r "again"]
+          set ret [Send $com $gaSet(suPsw)\r "-1p#"]
+          set ret [Send $com save\r "bytes copied in"]
+          if {$ret==0 && [string match {*startup-config successfully*} $buffer]} {
+            set ret 0
+          } else {
+            set gaSet(fail) "Save new password fail"
+            set ret -1
+          }
+        } else {
+          if {[string match {*Login failed user*} $buffer]} {
+            set ret [Send $com su\r4\r "again" 3]
+          }
+          set ret [Send $com 4\r "again" 3]
+          set ret [Send $com 4\r "-1p#" 3]
         }
-        set ret [Send $com 4\r "again" 3]
-        set ret [Send $com 4\r "-1p#" 3]
       }      
       if {$ret==0} {break}
     }

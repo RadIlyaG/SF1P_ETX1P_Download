@@ -402,6 +402,9 @@ proc ReadCom {com inStr {timeout 10}} {
       set ret FileNotFound
       break
     }
+    if {[regexp {PCPE>} $buff ma]} {
+      RLCom::Send $com "boot\r" buff stam 2
+    }
     
     after 1000
     set secNow [clock seconds]
@@ -651,8 +654,9 @@ proc GetDbrSW {barcode} {
   #set swTxt [glob SW*_$barcode.txt]
   #catch {file delete -force $swTxt}
   
-  set gaSet(general.SWver)     "vcpeos_[set sw]_arm.tar.gz"
-  puts "GetDbrSW barcode:<$barcode> gaSet(general.SWver):<$gaSet(general.SWver)>"
+  set gaSet(general.SWver) "vcpeos_[set sw]_arm.tar.gz"
+  set gaSet(sw_ver)         $sw
+  puts "GetDbrSW barcode:<$barcode> gaSet(general.SWver):<$gaSet(general.SWver)> gaSet(sw_ver):<$gaSet(sw_ver)>"
   if !$gaSet(secBoot) {
     set gaSet(general.flashImg)  "flash-image-[set boot]_[set gaSet(dutFam.mem)]G_.bin"
   } else {
@@ -1603,3 +1607,7 @@ proc GetAllPasses {{fromDate "2024-04-01"}} {
     return "[llength $l_passes] files. See c:/temp/all_passes_from_[set fromDate].txt" 
   }  
 }
+
+
+  
+  
