@@ -1363,7 +1363,7 @@ proc ModType {cell} {
     L450A {return ML620EU}
     L450B {return ML660PC}
     5G    {return EM9191}
-    LG    {return EC25-G}
+    LG    {return EG25-G}
     WH    {return GW16146}
     L4P   {return CA410M}
     LTA   {return MPLS83-X}

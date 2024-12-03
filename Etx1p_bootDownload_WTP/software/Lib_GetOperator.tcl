@@ -410,7 +410,7 @@ proc InsertIGid {dlg} {
 # ***************************************************************************
 proc InsertLastId {dlg} {
   global gaSet
-  parray gaSet *oper*
+  #parray gaSet *oper*
   if {[info exists gaSet(operatorID)] && $gaSet(operatorID)!=""} {
     [$dlg getframe].fr.f1.ent1 delete 0 end
     [$dlg getframe].fr.f1.ent1 insert 0 $gaSet(operatorID)
