@@ -1147,7 +1147,7 @@ proc Login {} {
   }
   set ret [Send $com su\r "assword"]
   if {$gaSet(sw_ver) >= "6.3.0.75"} {
-    set gaSet(suPsw) "1qaz2wsx3E-"
+    set gaSet(suPsw) "AT&Tpasswd10" ; #"1qaz2wsx3E-"
   } else {
     set gaSet(suPsw) "1234"
   }
