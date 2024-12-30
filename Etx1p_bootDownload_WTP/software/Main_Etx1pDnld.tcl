@@ -404,20 +404,14 @@ proc SetEnv {} {
   if {$ret!=0} {return $ret}
   
   CreateHostValGuiId
-  # set val 0
-  # if {[string match {*ilya-g*} [info host]]} {
-    # set ::hostVal ilyagi
-  # } else {
-    # regexp {dnld-(\d)-} [info host] ma val
-    # set ::hostVal $val
-  # }
-  # set ::GuiId $::hostVal.$gaSet(pair)
-  set ret [Send $com "setenv ipaddr 10.10.10.1${::hostVal}$gaSet(pair)\r" "PCPE>"]
-  if {$ret!=0} {return $ret}
-  set ret [Send $com "setenv gatewayip 10.10.10.1\r" "PCPE>"]
-  if {$ret!=0} {return $ret}
-  set ret [Send $com "setenv netmask 255.255.255.0\r" "PCPE>"]
-  if {$ret!=0} {return $ret}
+  
+  # perform it later, befor MACs
+  # set ret [Send $com "setenv ipaddr 10.10.10.1${::hostVal}$gaSet(pair)\r" "PCPE>"]
+  # if {$ret!=0} {return $ret}
+  # set ret [Send $com "setenv gatewayip 10.10.10.1\r" "PCPE>"]
+  # if {$ret!=0} {return $ret}
+  # set ret [Send $com "setenv netmask 255.255.255.0\r" "PCPE>"]
+  # if {$ret!=0} {return $ret}
   
     
   if !$gaSet(secBoot) {
@@ -453,6 +447,15 @@ proc SetEnv {} {
     set ret [Send $com "setenv set_nfsroot \"setenv nfsserv\;setenv nfsserv root=/dev/nfs rootfstype=nfs nfsroot=\$serverip:/srv/nfs/pcpe-general,vers=2,tcp\"\r" "PCPE>>"]
     if {$ret!=0} {return $ret}
   }
+  
+  
+  set ret [Send $com "setenv ipaddr 10.10.10.1${::hostVal}$gaSet(pair)\r" "PCPE>"]
+  if {$ret!=0} {return $ret}
+  set ret [Send $com "setenv gatewayip 10.10.10.1\r" "PCPE>"]
+  if {$ret!=0} {return $ret}
+  set ret [Send $com "setenv netmask 255.255.255.0\r" "PCPE>"]
+  if {$ret!=0} {return $ret}
+  
   
   ## 28/07/2021 11:41:00set ret [Send $com "setenv fdt_name boot/armada-3720-Etx1p.dtb\r" "PCPE>"]
   if {$ret!=0} {return $ret}
@@ -793,10 +796,10 @@ proc RunBootNet {} {
   
   if {$ret!=0} {return $ret} 
   
-  if {$gaSet(secBoot)==0} {
-    set ret [SetEnv]
-    if {$ret!=0} {return $ret} 
-  }
+  if {$gaSet(secBoot)==0} {}
+  set ret [SetEnv]
+  if {$ret!=0} {return $ret} 
+  
   
   Send $com reset\r "stam" 3
   for {set i 1} {$i<=20} {incr i} {

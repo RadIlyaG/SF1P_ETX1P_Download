@@ -113,7 +113,7 @@ def fuse_new(srvr_ip, boot_ver, ttyDev, boot_img):
     print(f'fuse_new stderr: {stderr.readlines()}')    
     #time.sleep(1)
     
-    cmd = f'cd /var/lib/tftpboot/secureboot/{boot_ver}; pwd; echo 123456 | sudo -S./read_com.sh {ttyDev} reseting 20'
+    cmd = f'cd ; cd ilya_g; pwd; echo 123456 | sudo -S ./read_com.py {ttyDev} reseting 20'
     print(f'fuse_new_cmd:{cmd}')
     stdin, stdout, stderr = client.exec_command(cmd)
     print(f'fuse_new stdout: {stdout.readlines()}') 
