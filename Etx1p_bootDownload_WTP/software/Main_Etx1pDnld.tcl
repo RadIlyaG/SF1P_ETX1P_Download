@@ -1172,6 +1172,7 @@ proc Login {} {
       if {[string match {*Login failed user*} $buffer]} {
         set ret [Send $com su\r4\r "again" 3]
       }
+      #set ret [Send $com su\r4\r "again" 3]
       set ret [Send $com 4\r "again" 3]
       set ret [Send $com 4\r "-1p#" 3]
     }
@@ -1350,6 +1351,10 @@ proc ID {} {
     return -1
   }
   
+  if {$gaSet(dutFam.lora)!=0} {
+    set ret [CheckDockerPS]
+    if {$ret != 0} {return $ret}
+  }
   
   set ret [ReadBootParams]
   if {$ret != 0} {return $ret}
@@ -2437,4 +2442,100 @@ proc Disable_Uboot {} {
   }
 
   return 0  
+}
+
+# ***************************************************************************
+# CheckDockerPS
+# ***************************************************************************
+proc CheckDockerPS {} {
+  global gaSet buffer
+  puts "\n[MyTime] CheckDockerPS"
+  set com $gaSet(comDut)
+  
+  set ret [Login]
+  if {$ret!=0} {return $ret}
+  set ret [Send $com "configure port lora 1\r" "(1)"]
+  if {$ret!=0} {
+    set gaSet(fail) "Can't reach \'port lora 1\'"
+    return $ret
+  }
+  set ret [Send $com "frequency plan us915\r" "(1)"]
+  if {$ret!=0} {
+    set gaSet(fail) "Can't confugure \'frequency plan\'"
+    return $ret
+  }
+  set ret [Send $com "gateway operation-mode udp-forward \r" "(1)"]
+  if {$ret!=0} {
+    set gaSet(fail) "Can't confugure \'gateway operation-mode\'"
+    return $ret
+  }
+  set ret [Send $com "gateway server ip-address 172.18.94.105 port 1700 \r" "(1)"]
+  if {$ret!=0} {
+    set gaSet(fail) "Can't confugure \'gateway server ip-address\'"
+    return $ret
+  }
+  set ret [Send $com "gateway no shutdown\r" "(1)" 30]
+  if {$ret!=0} {
+    set gaSet(fail) "Can't confugure \'gateway no shutdown\'"
+    return $ret
+  }
+  Send $com "exit all\r" "stam" 3
+  
+  
+  set ret [Login2Linux]
+  if {$ret==0} {
+    Send $com \r\r $gaSet(linuxPrompt)
+    Send $com "docker image list\r" $gaSet(linuxPrompt)
+    AddToPairLog $gaSet(pair) "Docker Image: $buffer"  
+    if ![string match {*rakwireless/udp-packet-forwarder*} $buffer] {
+      set gaSet(fail) "No Docker Image"
+      set ret -1
+    } 
+    if {$ret==0} {
+      Send $com "docker container list\r" $gaSet(linuxPrompt)
+      AddToPairLog $gaSet(pair) "Docker Container: $buffer"
+      if ![string match {*rakwireless/udp-packet-forwarder*} $buffer] {
+        set gaSet(fail) "No Docker Container"
+        set ret -1
+      }
+    }
+    Send $com "exit\r\r" -1p
+    return $ret
+  } else {
+    set gaSet(fail) "Login to Linux fail"
+    return $ret
+  }
+  set ret [Send $com "exit\r\r" -1p]
+  if {$ret!=0} {
+    set gaSet(fail) "Exit from Linux fail"
+  }
+  return $ret
+}
+# ***************************************************************************
+# Login2Linux
+# ***************************************************************************
+proc Login2Linux {} {
+  global gaSet buffer
+  set ret -1
+  set gaSet(loginBuffer) ""
+  set statusTxt  [$gaSet(sstatus) cget -text]
+  Status "Login to Linux"
+  set com $gaSet(comDut)
+  
+  Send $com "\r" stam 1
+  if {[string match {*root@localhost*} $gaSet(loginBuffer)]} {
+    return 0
+  }
+  
+  set ret [LogonDebug $com]
+  if {$ret!=0} {return $ret}
+  
+  set ret [Send $com "debug shell\r\r" localhost]
+  if [string match *:/#* $buffer] {
+    set gaSet(linuxPrompt) /#
+  } elseif [string match */\]* $buffer] {
+    set gaSet(linuxPrompt) /\]
+  }
+  set ret [Send $com "\r\r" $gaSet(linuxPrompt)]
+  return $ret
 }

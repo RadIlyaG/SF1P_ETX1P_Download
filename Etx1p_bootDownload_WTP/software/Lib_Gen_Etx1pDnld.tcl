@@ -1607,7 +1607,23 @@ proc GetAllPasses {{fromDate "2024-04-01"}} {
     return "[llength $l_passes] files. See c:/temp/all_passes_from_[set fromDate].txt" 
   }  
 }
-
-
-  
-  
+# ***************************************************************************
+# LogonDebug
+# ***************************************************************************
+proc LogonDebug {com} {
+  global gaSet buffer
+  Send $com "exit all\r" stam 0.25 
+  Send $com "logon debug\r" stam 0.25 
+  Status "logon debug"
+   if {[string match {*command not recognized*} $buffer]==0} {
+#     set ret [Send $com "logon debug\r" password]
+#     if {$ret!=0} {return $ret}
+    regexp {Key code:\s+(\d+)\s} $buffer - kc
+    catch {exec $::RadAppsPath/atedecryptor.exe $kc pass} password
+    set ret [Send $com "$password\r" "-1p#" ]
+    if {$ret!=0} {return $ret}
+  } else {
+    set ret 0
+  }
+  return $ret  
+}
