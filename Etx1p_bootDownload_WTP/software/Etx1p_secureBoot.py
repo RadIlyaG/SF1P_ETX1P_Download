@@ -2,6 +2,11 @@ import paramiko, time
 import re
 import sys
 
+'''
+    on Linux station:
+    apt-get install python3-serial
+'''
+
 
 def open_client(srvr_ip):
     username = 'etx-1p'
@@ -113,11 +118,11 @@ def fuse_new(srvr_ip, boot_ver, ttyDev, boot_img):
     print(f'fuse_new stderr: {stderr.readlines()}')    
     #time.sleep(1)
     
-    cmd = f'cd ; cd ilya_g; pwd; echo 123456 | sudo -S ./read_com.py {ttyDev} reseting 20'
-    print(f'fuse_new_cmd:{cmd}')
-    stdin, stdout, stderr = client.exec_command(cmd)
-    print(f'fuse_new stdout: {stdout.readlines()}') 
-    print(f'fuse_new stderr: {stderr.readlines()}')    
+    # cmd = f'cd ; cd ilya_g; pwd; echo 123456 | sudo -S ./read_com.py {ttyDev} reseting 20'
+    # print(f'fuse_new_cmd:{cmd}')
+    # stdin, stdout, stderr = client.exec_command(cmd)
+    # print(f'fuse_new stdout: {stdout.readlines()}') 
+    # print(f'fuse_new stderr: {stderr.readlines()}')    
     close_client(client)    
     return True
     
