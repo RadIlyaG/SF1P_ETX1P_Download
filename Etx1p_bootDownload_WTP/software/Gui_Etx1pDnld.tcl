@@ -504,6 +504,10 @@ proc ButRun {} {
       ## do not include UserStop in statistics
       set gaSet(runStatus) ""  
 	  }
+    if {$ret=="-3"} {
+	    ## do not include No Operator or Sanity fail in statistics
+      set gaSet(runStatus) ""  
+	  }
     if {$gaSet(runStatus)!=""} {
       UnregIdBarcode $gaSet(idBarcode)
     }
@@ -1013,7 +1017,7 @@ proc GuiReadOperator {} {
   incr ::wastedSecs [expr {[clock seconds]-$sn}]
   if {$ret=="-1"} {
     set gaSet(fail) "No Operator Name"
-    return $ret
+    return -3
   } else {
     set gaSet(operator) $ret
     return 0

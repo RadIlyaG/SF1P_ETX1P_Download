@@ -1513,20 +1513,20 @@ proc SanityBarcodes {} {
   if {$gaSet(idBarcode) eq ""} {
     set gaSet(curTest) $gaSet(startFrom)
     set gaSet(fail) "Scan the UUT IdBarcode"
-    set ret -1
+    set ret -3
   }
   if {$ret==0 && $gaSet(mainPcbIdBarc)==""} {
     set gaSet(fail) "Scan MainCard TraceID "
-    set ret -1
+    set ret -3
   }
   if {$ret==0 && $gaSet(mainPcbIdBarc) == $gaSet(sub1PcbIdBarc)} {
     set gaSet(fail) "MainCard and Sub1Card TraceID are same"
-    set ret -1
+    set ret -3
   }
   if {$ret==0 && ($gaSet(dutFam.ps)=="WDC" || $gaSet(dutFam.ps)=="12V")} {
     if {$gaSet(sub1PcbIdBarc)==""} {
       set gaSet(fail) "Scan Sub1Card TraceID "
-      set ret -1
+      set ret -3
     }
   }
   puts "SanityBarcodes ret:<$ret>"
