@@ -5,7 +5,7 @@ package require json
 ::http::register https 8445 [list tls::socket -tls1 1]
 package require md5
 
-package provide RLWS 1.2
+package provide RLWS 1.5
 
 namespace eval RLWS { 
 
@@ -48,6 +48,9 @@ proc ::RLWS::UpdateDB {barcode uutName hostDescription  date time status  failTe
 proc ::RLWS::UpdateDB2 {barcode uutName hostDescription  date time status  failTestsList failDescription dealtByServer traceID poNumber {data1 ""} {data2 ""} {data3 ""}} {
   set dbPath "//prod-svm1/tds/Temp/SQLiteDB/"
   set dbName "JerAteStats.db" 
+  if {$data1==""} {
+    set data1 [info host]
+  }
   foreach f {uutName hostDescription failTestsList failDescription dealtByServer data1 data2 data3} {
     set url_$f [::RLWS::_convertToUrl [set $f]]
   }
@@ -417,7 +420,7 @@ proc ::RLWS::_chk_connection_to_id {{id "EA100448957"}} {
   set url "$RLWS::MRserverUR/q003_idnumber_extant_check"
   set query [::http::formatQuery idNumber $id]
   foreach {res connected_mac} [::RLWS::_operateWS $url $query "Connection"] {}
-  if {$res!=0} {return [list $res $connected_id]}
+  if {$res!=0} {return [list $res $connected_mac]}
   set connected_mac [lindex $connected_mac [expr 1+ [lsearch $connected_mac "mac"] ] ]
   return [list $res $connected_mac]
 }
@@ -544,7 +547,7 @@ proc ::RLWS::_operateWS {url {query "NA"} paramName} {
     } else {
       foreach {name whatis} $asadict {
         foreach {par val} [lindex $whatis 0] {
-          # puts "<$par> <$val>"
+          #puts "<$par> <$val>"
           if {$val!="null"} {
             lappend res_txt $par $val
           }                 
@@ -684,13 +687,7 @@ proc ::RLWS::Get_Pages {id {traceId ""} {macs_qty 10} } {
   ::http::cleanup $tok
   
   if $::RLWS::debugWS {set ::b $body}
-  regsub -all {[<>]} $body " " b1
-  
-  if [string match {*502 Proxy Error*} $b1] {
-    set res_val -1
-    set res_txt "Server problem. Fail to get Pages"
-    return [list $res_val $res_txt]
-  }
+  regsub -all {[<>]} $body " " b1  
   if ![string match {*ns1:get_Data_4_DallasResponse*} $b1] {
     foreach {pa_ret pa_resTxt} [::RLWS::Ping_Services] {
       if $::RLWS::debugWS {puts "pa_ret:<$pa_ret> <$pa_resTxt>"}
@@ -699,11 +696,15 @@ proc ::RLWS::Get_Pages {id {traceId ""} {macs_qty 10} } {
       return [list $pa_ret $pa_resTxt]
     } else {
       set res_val -1
-      #set res_txt "Network problem "; #"Fail to get $paramName"; # "http::status: <$st> http::ncode: <$nc>"
-      set res_txt "Fail to get Pages"; #"Fail to get $paramName"; # "http::status: <$st> http::ncode: <$nc>"
+      set res_txt "Fail to get Pages"
       #set res_txt "Fail to get Pages for $id $traceId.."
       return [list $res_val $res_txt]
     }
+  }
+  if [string match {*502 Proxy Error*} $b1] {
+    set res_val -1
+    set res_txt "Server problem. Fail to get Pages"
+    return [list $res_val $res_txt]
   }
   if [string match {*ERROR*} $b1] {
     set err ERROR
@@ -1290,7 +1291,7 @@ proc ::RLWS::Get_EmpName {empId} {
 #   ::RLWS::Update_SimID_LoraGW EA1004489579 89011703274284322239 0016C001F1109216 will return
 #       0 "Update succeeded"
 #   ::RLWS::Update_SimID_LoraGW EA10044895 89011703274284322239 0016C001F1109216 will return
-#       -1 "Fail to get Update SimID and LoraGW"
+#       -1 "Fail to Update SimID and LoraGW"
 # ***************************************************************************
 proc ::RLWS::Update_SimID_LoraGW {id simId loraGw} {
   set procNameArgs [info level 0]
@@ -1339,6 +1340,54 @@ proc ::RLWS::Update_SimID_LoraGW {id simId loraGw} {
   } else {
     return [list -1 $resTxt]
   }  
+}
+
+# ***************************************************************************
+# ::RLWS::Update_DigitalSerialNumber
+#  ::RLWS::Update_DigitalSerialNumber DF200041584 G1342551RB2205RONEN
+#  Returns list of two values - result and resultText
+#   result may be -1 if WS fails,
+#                  0 if OK
+#   ::RLWS::Update_DigitalSerialNumber DF200041584 G1342551RB2205RONEN will return
+#       0 ""
+#   ::RLWS::Update_DigitalSerialNumber ZF200041584 G1342551RB2205RONEN will return
+#       -1 "ID NUMBER NOT EXISTS"
+# ***************************************************************************
+proc ::RLWS::Update_DigitalSerialNumber {id serial} {
+  set procNameArgs [info level 0]
+  set procName [lindex $procNameArgs 0]
+  if $::RLWS::debugWS {puts "\n$procNameArgs"}
+  set barc [format %.11s $id]
+  
+  set url "$::RLWS:::HttpsURL/digital/"
+  set param UpdateDigitalSerialnumber\?barcode=[set barc]\&serial1=[set serial]
+  append url $param
+  set resLst [::RLWS::_operateWS $url "NA" "Update Digital Serial Number"]
+  foreach {res resTxt} $resLst {}
+  if {$res!=0} {
+    return $resLst 
+  }
+  if {[llength $resTxt] == 0} {
+    foreach {pa_ret pa_resTxt} [::RLWS::Ping_Services] {
+      if $::RLWS::debugWS {puts "pa_ret:<$pa_ret> <$pa_resTxt>"}
+    }
+    if {$pa_ret != 0} {
+      return [list $pa_ret $pa_resTxt]
+    } else {
+      return [list -1 "Fail to get Digital Serial Code"]
+    }
+  }
+    
+  set value [lindex $resTxt [expr {1 + [lsearch $resTxt "DigitalSerial"]} ] ]
+  if $::RLWS::debugWS {puts "res:<$res> value:<$value>"}
+  if {$value == "ID NUMBER NOT EXISTS"} {
+    return [list -1 "Fail to Update Digital Serial Number, $value"]
+  } 
+  if {$value==0} {
+    return [list 0 {}]
+  } else {
+    return [list -1 $value] 
+  }
 }
 
 # ***************************************************************************
