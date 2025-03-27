@@ -168,6 +168,9 @@ set gaSet(enStaticIp) 0
 if ![info exists gaSet(enDwnlBootParamImg)] {
   set gaSet(enDwnlBootParamImg) 1
 }
+if ![info exists gaSet(pwrSwBy)] {
+  set gaSet(pwrSwBy) "usb-pio"
+}
 
 # set gaSet(linux_srvr_ip.1) 172.18.94.42
 # set gaSet(linux_srvr) 1

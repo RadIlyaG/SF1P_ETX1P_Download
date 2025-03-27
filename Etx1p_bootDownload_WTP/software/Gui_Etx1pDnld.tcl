@@ -29,19 +29,18 @@ proc GUI {} {
       {separator}  
        
       {cascad "Power" {} pwr 0 {
-        {command "PS-1 & PS-2 ON" {} "" {} -command {GuiPower $gaSet(pair) 1}} 
-        {command "PS-1 & PS-2 OFF" {} "" {} -command {GuiPower $gaSet(pair) 0}}  
-        {command "PS-1 ON" {} "" {} -command {GuiPower $gaSet(pair).1 1}} 
-        {command "PS-1 OFF" {} "" {} -command {GuiPower $gaSet(pair).1 0}} 
-        {command "PS-2 ON" {} "" {} -command {GuiPower $gaSet(pair).2 1}} 
-        {command "PS-2 OFF" {} "" {} -command {GuiPower $gaSet(pair).2 0}} 
-        {command "PS-1 & PS-2 OFF and ON" {} "" {} \
+        {command "Power ON" {} "" {} -command {GuiPower $gaSet(pair) 1}} 
+        {command "Power OFF" {} "" {} -command {GuiPower $gaSet(pair) 0}}          
+        {command "Power OFF and ON" {} "" {} \
             -command {
               GuiPower $gaSet(pair) 0
-              after 1000
+              after 3000
               GuiPower $gaSet(pair) 1
             }  
-        }             
+        } 
+        {separator}    
+        {radiobutton "Power switched by PIO-USB"   init {} {} -value "usb-pio" -variable gaSet(pwrSwBy)}
+        {radiobutton "Power switched by USB-Relay" init {} {} -value "usb-rly" -variable gaSet(pwrSwBy)}        
       }
       }                
       {separator}    

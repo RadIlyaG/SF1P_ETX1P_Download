@@ -14,6 +14,10 @@
 ## Relay without power default state: n.c --> com
 ######################################################
 proc Ramzor {color state {cmdLoc .}} {
+  global gaSet
+  if {$gaSet(pwrSwBy)=="usb-rly"} {
+    return 0
+  }
   if {$color=="green"} {
     set li [list 1]
     set colLi "green"
