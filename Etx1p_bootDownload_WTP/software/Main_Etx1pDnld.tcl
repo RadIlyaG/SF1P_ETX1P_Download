@@ -1144,7 +1144,8 @@ proc Login {} {
   }
   set com $gaSet(comDut) 
   set ret [Send $com \r\r\r\r "user>" 1]
-  if {[string match {*ETX-1p*} $buffer]} {
+  # 15:29 26/03/2025if {[string match {*ETX-1p*} $buffer]} {}
+  if {[string match "*$gaSet(prompt)*" $buffer]} {
     set ret [Send $com "exit all\r" $gaSet(prompt)]
     return 0
   }
