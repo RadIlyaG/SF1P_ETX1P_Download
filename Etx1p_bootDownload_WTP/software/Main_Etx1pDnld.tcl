@@ -1150,7 +1150,8 @@ proc Login {} {
     return 0
   }
   set ret [Send $com su\r "assword"]
-  if {$gaSet(sw_ver) >= "6.3.0.75"} {
+  #if {$gaSet(sw_ver) >= "6.3.0.75"} {}
+  if {[package vcompare $gaSet(sw_ver)  "6.3.0.75"] >= 0} {
     set gaSet(suPsw) "AT&Tpasswd10" ; #"1qaz2wsx3E-"
   } else {
     set gaSet(suPsw) "1234"
@@ -2460,7 +2461,8 @@ proc CheckDockerPS {} {
     set gaSet(fail) "Can't reach \'port lora 1\'"
     return $ret
   }
-  set ret [Send $com "frequency plan us915\r" "(1)"]
+  #set ret [Send $com "frequency plan us915\r" "(1)"]
+  set ret [Send $com "frequency plan $gaSet(dutFam.lora.region)\r" "(1)"]
   if {$ret!=0} {
     set gaSet(fail) "Can't confugure \'frequency plan\'"
     return $ret
@@ -2485,23 +2487,35 @@ proc CheckDockerPS {} {
   
   set ret [Login2Linux]
   if {$ret==0} {
-    Send $com \r\r $gaSet(linuxPrompt)
-    Send $com "docker image list\r" $gaSet(linuxPrompt)
-    AddToPairLog $gaSet(pair) "Docker Image: $buffer"  
-    if ![string match {*rakwireless/udp-packet-forwarder*} $buffer] {
-      set gaSet(fail) "No Docker Image"
-      set ret -1
-    } 
-    if {$ret==0} {
-      Send $com "docker container list\r" $gaSet(linuxPrompt)
-      AddToPairLog $gaSet(pair) "Docker Container: $buffer"
+    for {set chDocTry 1} {$chDocTry<=3} {incr chDocTry} {
+      puts "CheckDockerPS $chDocTry"
+      Send $com \r\r $gaSet(linuxPrompt)
+      Send $com "docker image list\r" $gaSet(linuxPrompt)
+      set ret 0
+      AddToPairLog $gaSet(pair) "Docker Image: $buffer"  
       if ![string match {*rakwireless/udp-packet-forwarder*} $buffer] {
-        set gaSet(fail) "No Docker Container"
+        set gaSet(fail) "No Docker Image"
         set ret -1
+      } 
+      if {$ret==0} {
+        Send $com "docker container list\r" $gaSet(linuxPrompt)
+        AddToPairLog $gaSet(pair) "Docker Container: $buffer"
+        if ![string match {*rakwireless/udp-packet-forwarder*} $buffer] {
+          set gaSet(fail) "No Docker Container"
+          set ret -1
+        }
+      }
+      if {$ret==0} {
+        break
+      } else {
+        Wait "Wait for docker container" 10
       }
     }
+    puts "CheckDockerPS $chDocTry ret:$ret\n"
+    
     Send $com "exit\r\r" -1p
     return $ret
+    
   } else {
     set gaSet(fail) "Login to Linux fail"
     return $ret
