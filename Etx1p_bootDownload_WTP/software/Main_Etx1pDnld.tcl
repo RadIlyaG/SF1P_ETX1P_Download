@@ -1562,9 +1562,15 @@ proc Eeprom {} {
   
   if {$ret==0} {
     set gaSet(fail) "Programming eEprom fail"
-    set ret [Send $com "iic e 52\r" "PCPE>" 20]  
-    if {$ret!=0} {return $ret} 
-    set ret [Send $com "iic c $eep_fi\r" "PCPE>" 20]  
+    if {[package vcompare $gaSet(dbrBootSwVer) "6.4.0"] >= 0} {
+      ## uboot 6.4.0 and above
+      Send $com "iic\r" "Enter filename" 3 
+      set ret [Send $com "$eep_fi\r" "PCPE>" 50] 
+    } else {
+      set ret [Send $com "iic e 52\r" "PCPE>" 20]  
+      if {$ret!=0} {return $ret} 
+      set ret [Send $com "iic c $eep_fi\r" "PCPE>" 20]  
+    }
     if {$ret!=0} {return $ret}
   
     if {[string match *done* $buffer]==0 && [string match *write* $buffer]==0} {
