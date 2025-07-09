@@ -84,7 +84,7 @@ proc SQliteAddLine {} {
   
   set poNumber ""
   if {$traceID!=""} {
-    foreach {res resTxt} {::RLWS::Get_PcbTraceIdData $traceID {{po number}}}
+    foreach {res resTxt} {::RLWS::Get_PcbTraceIdData $traceID {{po number}}} {}
     if {$res==0} {
       set poNumber $resTxt
     }
