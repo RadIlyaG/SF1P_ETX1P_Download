@@ -94,7 +94,7 @@ proc SQliteAddLine {} {
   for {set tr 1} {$tr <= 6} {incr tr} {
     #if [catch {UpdateDB $barcode $uut $hostDescription $date $tim-$gaSet(ButRunTime) $status $failTestsList $failReason $operator} res] {}
     #if [catch {RLWS::UpdateDB2 $barcode $uut $hostDescription $date $tim-$gaSet(ButRunTime) $status $failTestsList $failReason $operator $traceID $poNumber "" "" ""} res] {}
-    foreach {ret resTxt} [RLWS::UpdateDB2 $barcode $uut $hostDescription $date 
+    foreach {ret resTxt} [RLWS::UpdateDB2 $barcode $uut $hostDescription $date\ 
       $tim-$gaSet(ButRunTime) $status $failTestsList $failReason $operator \
       $traceID $poNumber [info host] "" ""] {}
     if {$ret!=0} {
