@@ -392,10 +392,10 @@ proc SetEnv {} {
   
   set gaSet(fail) "No \'PCPE\' respond"
   for {set i 1} {$i<=20} {incr i} {
-    set ret [Send $com \r\r "PCPE>" 1]
+    set ret [Send $com c\rc\r "PCPE>" 1] ; ## 10/07/2025 add c to stop in boot 6.4
     if {$ret==0} {break}
     if [string match {* E *} $buffer] {
-      Send $com "x\rx\r" "PCPE>" 1
+      Send $com "x\rx\r" "PCPE>" 1 ; ## 10/07/2025 add c to stop in boot 6.4
     }
   }
   
@@ -430,6 +430,18 @@ proc SetEnv {} {
     set ret [Send $com "saveenv\r" "SPI flash...done"]
     if {$ret!=0} {return $ret}
     
+    # 14:45 20/07/2025
+    # set ret [Send $com "reset\r" "resetting .."] 
+    # set gaSet(fail) "No \'PCPE\' respond"
+    # for {set i 1} {$i<=20} {incr i} {
+      # set ret [Send $com c\rc\r "PCPE>" 1] ; ## 10/07/2025 add c to stop in boot 6.4
+      # if {$ret==0} {break}
+      # if [string match {* E *} $buffer] {
+        # Send $com "x\rx\r" "PCPE>" 1 ; ## 10/07/2025 add c to stop in boot 6.4
+      # }
+    # }
+    # if {$ret!=0} {return $ret}
+    
     if {$gaSet(dutFam.sf)=="ETX-1P" || $gaSet(dutFam.sf)=="ETX-1P_SFC" || $gaSet(dutFam.sf)=="ETX-1P_A"} {
       set scr set_etx1p
     } else {
@@ -443,9 +455,17 @@ proc SetEnv {} {
     set ret [Send $com "run $scr\r" "SPI flash...done"]
     if {$ret!=0} {return $ret}
     
-    
-    set ret [Send $com "setenv set_nfsroot \"setenv nfsserv\;setenv nfsserv root=/dev/nfs rootfstype=nfs nfsroot=\$serverip:/srv/nfs/pcpe-general,vers=2,tcp\"\r" "PCPE>>"]
+    ## 09:54 20/07/2025
+    set ret [Send $com "setenv serverip 10.10.10.1\r" "PCPE>"]
     if {$ret!=0} {return $ret}
+    ## 
+        
+        
+    if {[package vcompare $gaSet(dbrBootSwVer) 6.4.0]=="-1"} {
+      ## if boot is before 6.4
+      set ret [Send $com "setenv set_nfsroot \"setenv nfsserv\;setenv nfsserv root=/dev/nfs rootfstype=nfs nfsroot=\$serverip:/srv/nfs/pcpe-general,vers=2,tcp\"\r" "PCPE>>"]
+      if {$ret!=0} {return $ret}
+    }
   }
   
   
@@ -467,17 +487,24 @@ proc SetEnv {} {
   if {$ret!=0} {return $ret}
   set ret [Send $com "setenv eth4addr  00:5${::hostVal}:82:11:24:${gaSet(pair)}$gaSet(pair)\r" "PCPE>"]
   if {$ret!=0} {return $ret}
-  set ret [Send $com "setenv ethact neta@40000\r" "PCPE>"]
+  if {[package vcompare $gaSet(dbrBootSwVer) 6.4.0]=="-1"} {
+    ## if boot is before 6.4
+    set ret [Send $com "setenv ethact neta@40000\r" "PCPE>"]
+  } 
   if {$ret!=0} {return $ret}
   
   set ret [Send $com "setenv NFS_VARIANT general\r" "PCPE>"]
   set ret [Send $com "setenv config_nfs \"setenv NFS_DIR /srv/nfs/pcpe-general\"\r" "PCPE>"]
   if !$gaSet(secBoot) {
     if $gaSet(enStaticIp) {
-      set ret [Send $com "setenv set_bootnetargs \"setenv bootargs console=ttyMV0,115200 earlycon=ar3700_uart,0xd0012000 \
-          root=/dev/nfs rw rootwait rootfstype=nfs ip=\$ipaddr:\$serverip:\$gatewayip:\$netmask:\$hostname:lan0:none \
-          nfsroot=\$serverip:/srv/nfs/pcpe-general,vers=2,tcp \$NFS_TYPE\"\r" "PCPE>"]
-    }
+        set ret [Send $com "setenv set_bootnetargs \"setenv bootargs console=ttyMV0,115200 earlycon=ar3700_uart,0xd0012000 \
+            root=/dev/nfs rw rootwait rootfstype=nfs ip=\$ipaddr:\$serverip:\$gatewayip:\$netmask:\$hostname:lan0:none \
+            nfsroot=\$serverip:/srv/nfs/pcpe-general,vers=2,tcp \$NFS_TYPE\"\r" "PCPE>"]
+    }    
+  } 
+  if {[package vcompare $gaSet(dbrBootSwVer) 6.4.0]>=0} {
+    ## if boot is 6.4 and more
+    set ret [Send $com "setenv set_nfsserv \"setenv -f nfsserv root=/dev/nfs rootfstype=nfs nfsroot=\$serverip:/srv/nfs/pcpe-general,vers=4,tcp\"\r" "PCPE>"]
   }
   
   set ret [Send $com "saveenv\r" "PCPE>"]
@@ -506,10 +533,10 @@ proc Download_FlashImage {} {
   set ret -1
   set gaSet(fail) "No \'PCPE\' respond"
   for {set i 1} {$i<=20} {incr i} {
-    set ret [Send $com \r\r "PCPE>" 1]
+    set ret [Send $com c\rc\r "PCPE>" 1] ; ## 10/07/2025 add c to stop in boot 6.4
     if {$ret==0} {break}
     if [string match {* E *} $buffer] {
-      Send $com "x\rx\r" "PCPE>" 1
+      Send $com "x\rx\r" "PCPE>" 1 ; ## 10/07/2025 add c to stop in boot 6.4
     }
   }
   
@@ -545,7 +572,7 @@ proc Download_FlashImage {} {
       set ret -1
       for {set i 1} {$i<=20} {incr i} {
         puts "\n $i" ; update
-        set ret [Send $com \r\r "g${i}g${i}g" 1]
+        set ret [Send $com c\rc\r "g${i}g${i}g" 1] ; ## 10/07/2025 add c to stop in boot 6.4
         set buffer [join $buffer ""]
         if {[string match *E>* $buffer]} {
           if {[string match {*PCPE>*} $buffer]} {
@@ -583,10 +610,10 @@ proc Download_BootParamImage {} {
   Status "Download boot files"
   set gaSet(fail) "No \'PCPE\' respond"
   for {set i 1} {$i<=20} {incr i} {
-    set ret [Send $com \r\r "PCPE>" 1]
+    set ret [Send $com c\rc\r "PCPE>" 1]; ## 10/07/2025 add c to stop in boot 6.4
     if {$ret==0} {break}
     if [string match {* E *} $buffer] {
-      Send $com "x\rx\r" "PCPE>" 1
+      Send $com "x\rx\r" "PCPE>" 1; ## 10/07/2025 add c to stop in boot 6.4
     }
   }
   
@@ -660,7 +687,7 @@ proc Download_BootParamImage {} {
     set ret -1
     for {set i 1} {$i<=20} {incr i} {
       puts "\n $i" ; update
-      set ret [Send $com \r\r "gggg" 1]
+      set ret [Send $com c\rc\r "gggg" 1]; ## 10/07/2025 add c to stop in boot 6.4
       set buffer [join $buffer ""]
       if {[string match *E>* $buffer]} {
         if {[string match {*PCPE>*} $buffer]} {
@@ -713,7 +740,7 @@ proc SetEthEnv {} {
   set ret -1
   set gaSet(fail) "No \'PCPE\' respond"
   for {set i 1} {$i<=10} {incr i} {
-    set ret [Send $com \r\r "PCPE>" 1]
+    set ret [Send $com c\rc\r "PCPE>" 1]; ## 10/07/2025 add c to stop in boot 6.4
     if {$ret==0} {break}
   }
   
@@ -787,10 +814,10 @@ proc RunBootNet {} {
   set ret -1
   set gaSet(fail) "No \'PCPE\' respond"
   for {set i 1} {$i<=20} {incr i} {
-    set ret [Send $com \r\r "PCPE>" 1]
+    set ret [Send $com c\rc\r "PCPE>" 1]; ## 10/07/2025 add c to stop in boot 6.4
     if {$ret==0} {break}
     if [string match {* E *} $buffer] {
-      Send $com "x\rx\r" "PCPE>" 1
+      Send $com "x\rx\r" "PCPE>" 1; ## 10/07/2025 add c to stop in boot 6.4
     }
   }
   
@@ -803,12 +830,14 @@ proc RunBootNet {} {
   
   Send $com reset\r "stam" 3
   for {set i 1} {$i<=20} {incr i} {
-    set ret [Send $com \r\r "PCPE>" 1]
+    set ret [Send $com c\rc\r "PCPE>" 1]; ## 10/07/2025 add c to stop in boot 6.4
     if {$ret==0} {break}
     if [string match {* E *} $buffer] {
-      Send $com "x\rx\r" "PCPE>" 1
+      Send $com "x\rx\r" "PCPE>" 1; ## 10/07/2025 add c to stop in boot 6.4
     }
   }
+  
+  # 15:40 20/07/2025 set ret [Send $com "setenv ethact neta@40000\r" "PCPE>"]
   
   puts "\n++++++++++++++++++++  printenv before run bootnet +++++++++++++++++++++++++++++++"
   #set ret [Send $com "printenv\r" "PCPE>"] 
@@ -836,7 +865,7 @@ proc RunBootNet {} {
   
   if {$ret==0} {
     Status "Boot up to \'exiting hardware virtualization\'"
-    set maxWait 1500; #900; #600
+    set maxWait 2000; #1500; #900; #600
     set gaSet(fail) "RunBootNet Fail after $maxWait"
     Send $com "run bootnet\r" "PCPE>"
     if [regexp {Kernel panic - not syncing: Aiee, killing interrupt handler!} $buffer ma] {
@@ -859,7 +888,7 @@ proc RunBootNet {} {
       }
       if {$gaSet(secBoot)==0} {
         for {set i 1} {$i<=20} {incr i} {
-          set ret [Send $com \r\r "gggg" 1]
+          set ret [Send $com \r\r "gggg" 1];
           set buffer [join $buffer ""]
           if {[string match *E>* $buffer]} {
             set ret 0
@@ -903,7 +932,7 @@ proc RunBootNet {} {
   if {$ret==0} {
     set ret -1
     for {set i 1} {$i<=20} {incr i} {
-      set ret [Send $com \r\r "$i gggg" 1]
+      set ret [Send $com c\rc\r "$i gggg" 1]; ## 10/07/2025 add c to stop in boot 6.4
       set buffer [join $buffer ""]
       if !$gaSet(secBoot) {
         if {[string match *E>* $buffer]} {
@@ -925,7 +954,7 @@ proc RunBootNet {} {
       if !$gaSet(secBoot) {
         set gaSet(fail) "Boot after xx Fail."
         for {set i 1} {$i<=10} {incr 1} {
-          set ret [Send $com "x\rx\r" "WTMI" 2] 
+          set ret [Send $com "cx\rcx\r" "WTMI" 2] ; ## 10/07/2025 add c to stop in boot 6.4
           if {$ret==0} {break}
           if {[string match *PCPE>* $buffer]} {
             set ret 0
@@ -979,10 +1008,10 @@ proc __RunBootNet {} {
   set ret -1
   set gaSet(fail) "No \'PCPE\' respond"
   for {set i 1} {$i<=20} {incr i} {
-    set ret [Send $com \r\r "PCPE>" 1]
+    set ret [Send $com c\rc\r "PCPE>" 1]; ## 10/07/2025 add c to stop in boot 6.4
     if {$ret==0} {break}
     if [string match {* E *} $buffer] {
-      Send $com "x\rx\r" "PCPE>" 1
+      Send $com "x\rx\r" "PCPE>" 1; ## 10/07/2025 add c to stop in boot 6.4
     }
   }
   
@@ -1553,10 +1582,10 @@ proc Eeprom {} {
   
   set gaSet(fail) "No \'PCPE\' respond"
   for {set i 1} {$i<=20} {incr i} {
-    set ret [Send $com \r\r "PCPE>" 1]
+    set ret [Send $com c\rc\r "PCPE>" 1]; ## 10/07/2025 add c to stop in boot 6.4
     if {$ret==0} {break}
     if [string match {* E *} $buffer] {
-      Send $com "x\rx\r" "PCPE>" 1
+      Send $com "x\rx\r" "PCPE>" 1; ## 10/07/2025 add c to stop in boot 6.4
     }
   }
   
@@ -1564,8 +1593,8 @@ proc Eeprom {} {
     set gaSet(fail) "Programming eEprom fail"
     if {[package vcompare $gaSet(dbrBootSwVer) "6.4.0"] >= 0} {
       ## uboot 6.4.0 and above
-      Send $com "iic\r" "Enter filename" 3 
-      set ret [Send $com "$eep_fi\r" "PCPE>" 50] 
+      # Send $com "iic\r" "Enter filename" 3 
+      set ret [Send $com "tftpboot  $eep_fi\r" "PCPE>" 50] 
     } else {
       set ret [Send $com "iic e 52\r" "PCPE>" 20]  
       if {$ret!=0} {return $ret} 
@@ -1588,10 +1617,10 @@ proc Eeprom {} {
     if {$ret!=0} {return $ret} 
     set gaSet(fail) "No \'PCPE\' respond"
     for {set i 1} {$i<=20} {incr i} {
-      set ret [Send $com \r\r "PCPE>" 1]
+      set ret [Send $com c\rc\r "PCPE>" 1]; ## 10/07/2025 add c to stop in boot 6.4
       if {$ret==0} {break}
       if [string match {* E *} $buffer] {
-        Send $com "x\rx\r" "PCPE>" 1
+        Send $com "x\rx\r" "PCPE>" 1; ## 10/07/2025 add c to stop in boot 6.4
       }
     }
   }
@@ -1617,11 +1646,11 @@ proc ReadBootParams {} {
   set gaSet(loginBuffer) ""
   set gaSet(fail) "No \'PCPE\' respond"
   for {set i 1} {$i<=20} {incr i} {
-    set ret [Send $com \r\r "PCPE>" 1]
+    set ret [Send $com c\rc\r "PCPE>" 1]; ## 10/07/2025 add c to stop in boot 6.4
     append gaSet(loginBuffer) $buffer
     if {$ret==0} {break}
     if [string match {* E *} $buffer] {
-      Send $com "x\rx\r" "PCPE>" 1
+      Send $com "x\rx\r" "PCPE>" 1; ## 10/07/2025 add c to stop in boot 6.4
       append gaSet(loginBuffer) $buffer
     }
   }
@@ -1650,11 +1679,11 @@ proc ReadBootParams {} {
     set gaSet(loginBuffer) ""
     set gaSet(fail) "No \'PCPE\' respond"
     for {set i 1} {$i<=20} {incr i} {
-      set ret [Send $com \r\r "PCPE>" 1]
+      set ret [Send $com c\rc\r "PCPE>" 1]; ## 10/07/2025 add c to stop in boot 6.4
       append gaSet(loginBuffer) $buffer
       if {$ret==0} {break}
       if [string match {* E *} $buffer] {
-        Send $com "x\rx\r" "PCPE>" 1
+        Send $com "x\rx\r" "PCPE>" 1; ## 10/07/2025 add c to stop in boot 6.4
         append gaSet(loginBuffer) $buffer
       }
     }
@@ -1769,11 +1798,11 @@ proc PowerResetAndLogin2Boot {} {
   set gaSet(loginBuffer) ""
   set gaSet(fail) "No \'PCPE\' respond"
   for {set i 1} {$i<=20} {incr i} {
-    set ret [Send $com \r\r "PCPE>" 1]
+    set ret [Send $com c\rc\r "PCPE>" 1]; ## 10/07/2025 add c to stop in boot 6.4
     append gaSet(loginBuffer) $buffer
     if {$ret==0} {break}
     if [string match {* E *} $buffer] {
-      Send $com "x\rx\r" "PCPE>" 1
+      Send $com "x\rx\r" "PCPE>" 1; ## 10/07/2025 add c to stop in boot 6.4
       append gaSet(loginBuffer) $buffer
     }
   }
@@ -2336,10 +2365,10 @@ proc SecureBoot {} {
     
     set gaSet(fail) "No \'PCPE\' respond"
     for {set i 1} {$i<=20} {incr i} {
-      set ret [Send $com \r\r "PCPE>" 1]
+      set ret [Send $com c\rc\r "PCPE>" 1]; ## 10/07/2025 add c to stop in boot 6.4
       if {$ret==0} {break}
       if [string match {* E *} $buffer] {
-        Send $com "x\rx\r" "PCPE>" 1
+        Send $com "x\rx\r" "PCPE>" 1; ## 10/07/2025 add c to stop in boot 6.4
       }
     }
     
@@ -2420,10 +2449,10 @@ proc Disable_Uboot {} {
   set com  $gaSet(comDut)
   set gaSet(fail) "No \'PCPE\' respond"
   for {set i 1} {$i<=20} {incr i} {
-    set ret [Send $com \r\r "PCPE>" 1]
+    set ret [Send $com c\rc\r "PCPE>" 1]; ## 10/07/2025 add c to stop in boot 6.4
     if {$ret==0} {break}
     if [string match {* E *} $buffer] {
-      Send $com "x\rx\r" "PCPE>" 1
+      Send $com "x\rx\r" "PCPE>" 1; ## 10/07/2025 add c to stop in boot 6.4
     }
   }
   if {$ret!=0} {
