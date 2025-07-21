@@ -1200,12 +1200,19 @@ proc Login {} {
         set ret -1
       }
     } else {
+    
+      # 14:47 21/07/2025
+      # if {[string match {*Login failed user*} $buffer]} {
+        # set ret [Send $com su\r4\r "again" 3]
+      # }
+      # #set ret [Send $com su\r4\r "again" 3]
+      # set ret [Send $com 4\r "again" 3]
+      # set ret [Send $com 4\r "-1p#" 3]
+      
       if {[string match {*Login failed user*} $buffer]} {
-        set ret [Send $com su\r4\r "again" 3]
+        set ret [Send $com su\r$gaSet(suPsw)\r "again" 3]
       }
-      #set ret [Send $com su\r4\r "again" 3]
-      set ret [Send $com 4\r "again" 3]
-      set ret [Send $com 4\r "-1p#" 3]
+      set ret [Send $com $gaSet(suPsw)\r "-1p#"]
     }
   }
   if {$ret==0} {return $ret}
@@ -1255,11 +1262,18 @@ proc Login {} {
             set ret -1
           }
         } else {
+        
+          # 15:35 21/07/2025
+          # if {[string match {*Login failed user*} $buffer]} {
+            # set ret [Send $com su\r4\r "again" 3]
+          # }
+          # set ret [Send $com 4\r "again" 3]
+          # set ret [Send $com 4\r "-1p#" 3]
+          
           if {[string match {*Login failed user*} $buffer]} {
-            set ret [Send $com su\r4\r "again" 3]
+            set ret [Send $com su\r$gaSet(suPsw)\r "again" 3]
           }
-          set ret [Send $com 4\r "again" 3]
-          set ret [Send $com 4\r "-1p#" 3]
+          set ret [Send $com $gaSet(suPsw)\r "-1p#"]
         }
       }      
       if {$ret==0} {break}
