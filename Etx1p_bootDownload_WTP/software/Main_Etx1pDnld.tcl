@@ -1660,7 +1660,9 @@ proc ReadBootParams {} {
   set gaSet(loginBuffer) ""
   set gaSet(fail) "No \'PCPE\' respond"
   for {set i 1} {$i<=20} {incr i} {
-    set ret [Send $com c\rc\r "PCPE>" 1]; ## 10/07/2025 add c to stop in boot 6.4
+    set ret [Send $com c\r "PCPE>" 1]; ## 10/07/2025 add c to stop in boot 6.4
+    append gaSet(loginBuffer) $buffer
+    set ret [Send $com c\r "PCPE>" 1]; ## 10/07/2025 add c to stop in boot 6.4
     append gaSet(loginBuffer) $buffer
     if {$ret==0} {break}
     if [string match {* E *} $buffer] {
@@ -1876,26 +1878,36 @@ proc MicroSDPerform {} {
   puts "\n[MyTime] MicroSDPerform"; update
   set com $gaSet(comDut)
   
-  Send $com "mmc dev 0:1\r" "PCPE" 1
+  if {[package vcompare $gaSet(dbrBootSwVer) 6.4.0]>=0} {
+    ## if boot is 6.4 and more
+    set dev_part "1:0"
+    set mmc "mmc1"
+  } else {
+    set dev_part "0:1"
+    set mmc "mmc0"
+  }
+  puts "SW:<$gaSet(dbrBootSwVer)> dev_part:<$dev_part> mmc:<$mmc>"
+  
+  Send $com "mmc dev $dev_part\r" "PCPE" 1
   after 500
-  set ret [Send $com "mmc dev 0:1\r" "PCPE"]
+  set ret [Send $com "mmc dev $dev_part\r" "PCPE"]
   if {$ret!=0} {
-    set gaSet(fail) "\'mmc dev 0:1\' fail"
+    set gaSet(fail) "\'mmc dev $dev_part\' fail"
     return -1
   }
   if ![string match {*switch to partitions \#0, OK*} $buffer] { 
     after 500
-    set ret [Send $com "mmc dev 0:1\r" "PCPE"]
+    set ret [Send $com "mmc dev $dev_part\r" "PCPE"]
     if ![string match {*switch to partitions \#0, OK*} $buffer] { 
-      set gaSet(fail) "\'dev 0:1 switch to partitions 0\' does not exist"
+      set gaSet(fail) "\'dev $dev_part switch to partitions 0\' does not exist"
       return -1
     }
   }
-  if ![string match {*mmc0 is current device*} $buffer] {
+  if ![string match "*$mmc is current device*" $buffer] {
     after 500
-    set ret [Send $com "mmc dev 0:1\r" "PCPE"]
-    if ![string match {*mmc0 is current device*} $buffer] {
-      set gaSet(fail) "\'mmc0 is current device\' does not exist"
+    set ret [Send $com "mmc dev $dev_part\r" "PCPE"]
+    if ![string match "*$mmc is current device*" $buffer] {
+      set gaSet(fail) "\'$mmc is current device\' does not exist"
       return -1
     }
   }
@@ -1946,17 +1958,30 @@ proc SocFlashMemPerform {} {
   puts "\n[MyTime] SocFlashMemPerform"; update
   set com $gaSet(comDut)
   
-  set ret [Send $com "mmc dev 1:0\r" "PCPE"]
+  if {[package vcompare $gaSet(dbrBootSwVer) 6.4.0]>=0} {
+    ## if boot is 6.4 and more
+    set dev "0"
+    set part "1"
+  } else {
+    set dev "1"
+    set part "0"
+  }
+  set dev_part "${dev}:${part}"
+  set mmc "mmc${dev}"
+  puts "SW:<$gaSet(dbrBootSwVer)> dev_part:<$dev_part> mmc:<$mmc>"
+  
+  
+  set ret [Send $com "mmc dev $dev_part\r" "PCPE"]
   if {$ret!=0} {
-    set gaSet(fail) "\'mmc dev 1:0\' fail"
+    set gaSet(fail) "\'mmc dev $dev_part\' fail"
     return -1
   }
   if ![string match {*switch to partitions \#0, OK*} $buffer] {
     set gaSet(fail) "\'switch to partitions 0\' does not exist"
     return -1
   }
-  if ![string match {*mmc1(part 0) is current device*} $buffer] {
-    set gaSet(fail) "\'mmc1(part 0) is current device\' does not exist"
+  if ![string match "*${mmc}(part 0) is current device*" $buffer] {
+    set gaSet(fail) "\'${mmc}(part 0) is current device\' does not exist"
     return -1
   }
   
@@ -1981,12 +2006,12 @@ proc SocFlashMemPerform {} {
     set gaSet(fail) "\'mmc list\' fail"
     return -1
   }
-  if ![string match {*sdhci\@d0000: 0*} $buffer] {
-    set gaSet(fail) "\'sdhci@d0000: 0\' does not exist"
-    return -1
-  }
-  if ![string match {*sdhci@d8000: 1 (eMMC)*} $buffer] {
-    set gaSet(fail) "\'sdhci@d8000: 1 (eMMD)\' does not exist"
+  # if ![string match "*sdhci\@d0000: 0*" $buffer] {
+    # set gaSet(fail) "\'sdhci@d0000: 0\' does not exist"
+    # return -1
+  # }
+  if ![string match "*sdhci@d8000: $dev (eMMC)*" $buffer] {
+    set gaSet(fail) "\'sdhci@d8000: $dev (eMMC)\' does not exist"
     return -1
   }
   
@@ -2116,7 +2141,15 @@ proc BootLedsPerf {} {
     set ret 0
     ## no SD in ETX
   } else {
+    if {[package vcompare $gaSet(dbrBootSwVer) 6.4.0]>=0} {
+      ## if boot is 6.4 and more
+      set dev_part "1:0"
+    } else {
+      set dev_part "0:1"
+    }
+    puts "SW:<$gaSet(dbrBootSwVer)> dev_part:<$dev_part>"
     OpenPio 
+    
     Power all off
     ClosePio
     RLSound::Play information
@@ -2145,9 +2178,9 @@ proc BootLedsPerf {} {
         return -1
       }
       
-      set ret [Send $com "mmc dev 0:1\r" "PCPE"]
+      set ret [Send $com "mmc dev $dev_part\r" "PCPE"]
       if {$ret!=0} {
-        set gaSet(fail) "\'mmc dev 0:1\' fail"
+        set gaSet(fail) "\'mmc dev $dev_part\' fail"
         return -1
       }
    
@@ -2547,7 +2580,7 @@ proc CheckDockerPS {} {
         set ret -1
       } 
       if {$ret==0} {
-        Send $com "docker container list\r" $gaSet(linuxPrompt)
+        Send $com "docker container list -a\r" $gaSet(linuxPrompt)
         AddToPairLog $gaSet(pair) "Docker Container: $buffer"
         if ![string match {*rakwireless/udp-packet-forwarder*} $buffer] {
           set gaSet(fail) "No Docker Container"
