@@ -877,6 +877,7 @@ proc RunBootNet {} {
       return -1
     }
     set ret [ReadCom $com "exiting hardware virtualization" $maxWait]
+    puts "\n[MyTime] ret after ReadCom_hard_virt:$ret"; update
     if {$ret!=0} {
       if {$ret=="KernelPanic"} {
         set gaSet(fail) "Can't mount FS"
@@ -895,6 +896,7 @@ proc RunBootNet {} {
             break
           }
         }
+        puts "\n[MyTime] SecB==0 ret after 20loop_E:$ret"; update
         if {$ret!=0} {
           set gaSet(fail) "The UUT doesn't respond by E>"
         }  
@@ -909,8 +911,10 @@ proc RunBootNet {} {
             }
           } 
         }
+        puts "\n[MyTime] SecB==0 ret after 3xr_WTMI:$ret"; update
         if {$ret==0} {
           set ret [ReadCom $com "exiting hardware virtualization" $maxWait]
+          puts "\n[MyTime] ret after ReadCom_hard_virt2:$ret"; update
         }
       }
     }
@@ -929,6 +933,8 @@ proc RunBootNet {} {
   }
   
   if {$ret==0 && $gaSet(dnldMode)==0} {}
+  
+  puts "\n[MyTime] before_user ret before loop20_E:$ret"; update
   if {$ret==0} {
     set ret -1
     for {set i 1} {$i<=20} {incr i} {
@@ -946,6 +952,7 @@ proc RunBootNet {} {
         break
       }
     }
+    puts "\n[MyTime] before_user ret after loop20_E:$ret"; update
     if {$ret!=0} {
       set gaSet(fail) "The UUT doesn't respond by E>."
     }  
@@ -954,7 +961,7 @@ proc RunBootNet {} {
       if !$gaSet(secBoot) {
         set gaSet(fail) "Boot after xx Fail."
         for {set i 1} {$i<=10} {incr 1} {
-          set ret [Send $com "cx\rcx\r" "WTMI" 2] ; ## 10/07/2025 add c to stop in boot 6.4
+          set ret [Send $com "x\rx\r" "WTMI" 2] 
           if {$ret==0} {break}
           if {[string match *PCPE>* $buffer]} {
             set ret 0
@@ -962,12 +969,14 @@ proc RunBootNet {} {
           }
           after 2000
         } 
+        puts "\n[MyTime] before_user ret after loop10_WTMI:$ret i:$i"; update
       }
     }
   } elseif {$ret==0 && $gaSet(dnldMode)==1} {
     ## do nothing
     set ret 0
   }
+  puts "\n[MyTime] before_user:$ret"; update
   
   if {$ret==0} {
     for {set us 1} {$us <= 1} {incr us} {
