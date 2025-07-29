@@ -34,7 +34,10 @@ proc BuildTests {} {
   if {$gaSet(UutOpt)=="ETX1P"} {
     # ETX1P doesn't have MicroSD
   } else {
-    lappend glTests MicroSD
+    if {[package vcompare $gaSet(sw_ver)  "6.4.0"] == "-1"} {
+      ## perform this test if SW < 6.4.0
+      lappend glTests MicroSD
+    }
   }
   lappend glTests SOC_Flash_Memory SOC_i2C 
   lappend glTests FrontPanelLeds
@@ -1183,6 +1186,11 @@ proc Login {} {
   set com $gaSet(comDut) 
   set ret [Send $com \r\r\r\r "user>" 1]
   # 15:29 26/03/2025if {[string match {*ETX-1p*} $buffer]} {}
+  if {[string match "*PCPE>*" $buffer]} {
+    Send $com boot\r "stam" 10
+    Wait "Wait for booting" 30 
+  }
+  
   if {[string match "*$gaSet(prompt)*" $buffer]} {
     set ret [Send $com "exit all\r" $gaSet(prompt)]
     return 0
@@ -1403,6 +1411,11 @@ proc ID {} {
 	      $gaSet(mainHW) >= 0.6 && $uutModel != "SF-1P superset CP_2"} {
       set gaSet(fail) "The Model is \'$uutModel\'. Should be \'SF-1P superset CP_2\'" 
     return -1
+  }
+  
+  if {[package vcompare $gaSet(sw_ver)  "6.4.0.69"] >= 0} {
+    set ret [FlashStatus]
+    if {$ret != 0} {return $ret}
   }
   
   if {$gaSet(dutFam.lora)!=0} {
@@ -2146,74 +2159,77 @@ proc BootLedsPerf {} {
   set ret [PowerResetAndLogin2Boot]
   if {$ret!=0} {return $ret}
   
-  if {$gaSet(dutFam.box)=="ETX-1P"} {
-    set ret 0
-    ## no SD in ETX
-  } else {
-    if {[package vcompare $gaSet(dbrBootSwVer) 6.4.0]>=0} {
-      ## if boot is 6.4 and more
-      set dev_part "1:0"
-    } else {
-      set dev_part "0:1"
-    }
-    puts "SW:<$gaSet(dbrBootSwVer)> dev_part:<$dev_part>"
-    OpenPio 
+  ## 13:33 29/07/2025
+  # if {$gaSet(dutFam.box)=="ETX-1P"} {
+    # set ret 0
+    # ## no SD in ETX
+  # } else {
+    # if {[package vcompare $gaSet(dbrBootSwVer) 6.4.0]>=0} {
+      # ## if boot is 6.4 and more
+      # set dev_part "1:0"
+    # } else {
+      # set dev_part "0:1"
+    # }
+    # puts "SW:<$gaSet(dbrBootSwVer)> dev_part:<$dev_part>"
+    # OpenPio 
     
-    Power all off
-    ClosePio
-    RLSound::Play information
-    set txt "Remove the SD-card"
-    set res [DialogBox -title "Boot Leds Test" -type "Ok Cancel" -message $txt  -icon images/info]
-    if {$res=="Cancel"} {
-      set gaSet(fail) "User Stop" 
-      return -2
-    }
-    OpenPio 
-    Power all on
-    ClosePio
-    set ret [PowerResetAndLogin2Boot]
-    if {$ret!=0} {return $ret}
-    for {set try 1} {$try <= 3} {incr try} {
-      RLSound::Play information
-      set txt "Remove the SD-card"
-      if {$try==1} {
-        ## don't ask to remove the sd on the first cycle
-        set res Ok
-      } else {
-        set res [DialogBox -title "Boot Leds Test" -type "Ok Cancel" -message $txt  -icon images/info]
-      }
-      if {$res=="Cancel"} {
-        set gaSet(fail) "\'LTE AUX\' Test fail" 
-        return -1
-      }
+    # Power all off
+    # ClosePio
+    # RLSound::Play information
+    # set txt "Remove the SD-card"
+    # set res [DialogBox -title "Boot Leds Test" -type "Ok Cancel" -message $txt  -icon images/info]
+    # if {$res=="Cancel"} {
+      # set gaSet(fail) "User Stop" 
+      # return -2
+    # }
+    # OpenPio 
+    # Power all on
+    # ClosePio
+    # set ret [PowerResetAndLogin2Boot]
+    # if {$ret!=0} {return $ret}
+    # for {set try 1} {$try <= 3} {incr try} {
+      # RLSound::Play information
+      # set txt "Remove the SD-card"
+      # if {$try==1} {
+        # ## don't ask to remove the sd on the first cycle
+        # set res Ok
+      # } else {
+        # set res [DialogBox -title "Boot Leds Test" -type "Ok Cancel" -message $txt  -icon images/info]
+      # }
+      # if {$res=="Cancel"} {
+        # set gaSet(fail) "\'LTE AUX\' Test fail" 
+        # return -1
+      # }
       
-      set ret [Send $com "mmc dev $dev_part\r" "PCPE"]
-      if {$ret!=0} {
-        set gaSet(fail) "\'mmc dev $dev_part\' fail"
-        return -1
-      }
+      # set ret [Send $com "mmc dev $dev_part\r" "PCPE"]
+      # if {$ret!=0} {
+        # set gaSet(fail) "\'mmc dev $dev_part\' fail"
+        # return -1
+      # }
    
-      if ![string match {*ot found*} $buffer] {   
-        set gaSet(fail) "SD card is not pulled out"
-        set ret -1
-      } else {
-        set ret 0
-        break
-      }
-    }
-  }
-  if {$ret!=0} {return $ret}
+      # if ![string match {*ot found*} $buffer] {   
+        # set gaSet(fail) "SD card is not pulled out"
+        # set ret -1
+      # } else {
+        # set ret 0
+        # break
+      # }
+    # }
+  # }
+  # if {$ret!=0} {return $ret}
   
   if {$gaSet(dutFam.box)=="ETX-1P"} {
+    set sdTxt ""
     set runTxt ""
     set verb "is"
   } else {
+    set sdTxt "Remove the SD-card\n\n"
     set runTxt "and RUN "
     set verb "are"
   }
   RLSound::Play information
   set res [DialogBox -title "ALM $runTxt Led Test" -type "Yes No" \
-      -message "Verify the ALM $runTxt Led/s $verb OFF" -icon images/info]
+      -message "${sdTxt}Verify the ALM $runTxt Led/s $verb OFF" -icon images/info]
   if {$res=="No"} {
     set gaSet(fail) "ALM $runTxt Led/s $verb not OFF" 
     return -1
@@ -2225,7 +2241,7 @@ proc BootLedsPerf {} {
   set res [DialogBox -title "PWR $runTxt Green Led Test" -type "Yes No" \
       -message "Verify the PWR $runTxt Green Led/s $verb ON" -icon images/info]
   if {$res=="No"} {
-    set gaSet(fail) "PWR $runTxt Green Led/s $$verb not ON" 
+    set gaSet(fail) "PWR $runTxt Green Led/s $verb not ON" 
     return -1
   }
   Send $com "gpio toogle GPIO112\r" "PCPE"
@@ -2644,4 +2660,56 @@ proc Login2Linux {} {
   }
   set ret [Send $com "\r\r" $gaSet(linuxPrompt)]
   return $ret
+}
+
+# ***************************************************************************
+# FlashStatus
+# ***************************************************************************
+proc FlashStatus {} {
+  global gaSet buffer
+  Status "FlashStatus"
+  
+  set com $gaSet(comDut)
+  set ret [Login]
+  if {$ret!=0} {return $ret}
+  
+  set ret [Send $com "file\r" ">file"]
+  if {$ret!=0} {
+    set gaSet(fail) "Can't reach \'file\'"
+    return $ret
+  }
+  
+  Send $com "flash-enable\r" ">file"
+  after 2000
+  Send $com "show flash-status\r" "stam" 2
+  
+  set res [regexp {Operational Status[:\s]+([a-zA-Z\s]+)\s+Port} $buffer ma op_stat]
+  if {$res==0} {
+    set gaSet(fail) "Can't read Operational Status"
+    return -1
+  }
+  set op_stat [string trim $op_stat]
+  puts "op_stat:<$op_stat>"
+  AddToPairLog $gaSet(pair) "Operational Status: $op_stat"
+  
+  set op_stat_ok "Media Is Plugged In And Operational"
+  if {$op_stat != $op_stat_ok} {
+    set gaSet(fail) "The Operational Status is $op_stat"
+    return -1
+  }
+  
+  set res [regexp {Capacity \(megabytes\)[:\s]+(\d+)\s+SF-1p} $buffer ma cap]
+  if {$res==0} {
+    set gaSet(fail) "Can't read Capacity"
+    return -1
+  }
+  set cap [string trim $cap]
+  puts "cap:<$cap>"
+  AddToPairLog $gaSet(pair) "Capacity: $cap"
+  if {$cap == 0} {
+    set gaSet(fail) "The Capacity is 0"
+    return -1
+  }
+  
+  return 0
 }

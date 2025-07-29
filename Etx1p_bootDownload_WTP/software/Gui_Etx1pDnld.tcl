@@ -449,11 +449,14 @@ proc ButRun {} {
       catch {RLEH::Close}
        
       RLEH::Open
-      OpenPio 
-      Power all off
-      after 4000
-      Power all on
-      ClosePio
+      
+      if ![string match {*ID*} $gaSet(startFrom)] {
+        OpenPio 
+        Power all off
+        after 4000
+        Power all on
+        ClosePio
+      }
       
       set ret [RLCom::Open $gaSet(comDut) 115200 8 NONE 1]
       if {$ret==0} { 
